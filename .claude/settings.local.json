@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__Claude_Preview__preview_start",
+      "Bash(where python3 *)",
+      "Bash(where python *)",
+      "Bash(where py *)",
+      "Bash(py --version)",
+      "Bash(ls \"C:\\\\Users\\\\mahmo\\\\AppData\\\\Local\\\\Microsoft\\\\WindowsApps\\\\\" | grep -i python)",
+      "mcp__visualize__read_me",
+      "mcp__visualize__show_widget",
+      "Bash(git --version)",
+      "Bash(gh --version)",
+      "PowerShell(gh --version)"
+    ]
+  }
+}
