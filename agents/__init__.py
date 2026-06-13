@@ -1,31 +1,14 @@
-"""
-Agent registry.
+from agents import briefing as _briefing
+from agents import home_assistant as _ha
 
-To add a new agent:
-1. Create a new file in this directory (e.g., agents/weather.py)
-2. Define your tool schema and handler function
-3. Import and register them here following the pattern below.
-"""
-
-# Tool schemas exposed to the Claude orchestrator
 AGENT_TOOLS: list[dict] = [
-    # Example (uncomment and fill in when adding agents):
-    # {
-    #     "name": "get_weather",
-    #     "description": "Get the current weather for a given location.",
-    #     "input_schema": {
-    #         "type": "object",
-    #         "properties": {
-    #             "location": {"type": "string", "description": "City name or coordinates"},
-    #         },
-    #         "required": ["location"],
-    #     },
-    # },
+    _briefing.TOOL_SCHEMA,
+    _ha.TOOL_SCHEMA,
 ]
 
-# Map tool name → handler function
 _DISPATCH: dict[str, callable] = {
-    # "get_weather": weather_agent.run,
+    "get_briefing": lambda **_: _briefing.get_briefing(agent_count=len(AGENT_TOOLS)),
+    **_ha.DISPATCH,
 }
 
 

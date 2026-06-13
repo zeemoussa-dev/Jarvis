@@ -1,8 +1,3 @@
-"""
-Shared Jarvis state broadcaster.
-The UI server subscribes here; main.py sets state here.
-"""
-
 import asyncio
 import json
 from enum import Enum
@@ -39,9 +34,18 @@ def unsubscribe(q: asyncio.Queue) -> None:
 def set_state(state: JarvisState) -> None:
     global _current_state
     _current_state = state
-    payload = json.dumps({"state": state.value})
+    _emit({"type": "state", "state": state.value})
+
+
+def broadcast_text(role: str, text: str) -> None:
+    """Broadcast a conversation message to all UI subscribers."""
+    _emit({"type": "message", "role": role, "text": text})
+
+
+def _emit(payload: dict) -> None:
+    data = json.dumps(payload)
     if _loop and _loop.is_running():
-        asyncio.run_coroutine_threadsafe(_broadcast(payload), _loop)
+        asyncio.run_coroutine_threadsafe(_broadcast(data), _loop)
 
 
 async def _broadcast(payload: str) -> None:

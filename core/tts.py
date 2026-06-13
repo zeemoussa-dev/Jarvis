@@ -1,3 +1,5 @@
+import re
+
 from elevenlabs.client import ElevenLabs
 from elevenlabs import VoiceSettings
 
@@ -14,8 +16,20 @@ def _get_client() -> ElevenLabs:
     return _client
 
 
+def _clean(text: str) -> str:
+    """Strip markdown so TTS doesn't read symbols aloud."""
+    text = re.sub(r"\*{1,3}(.+?)\*{1,3}", r"\1", text)   # bold / italic
+    text = re.sub(r"_{1,2}(.+?)_{1,2}", r"\1", text)      # underscore emphasis
+    text = re.sub(r"`{1,3}(.+?)`{1,3}", r"\1", text)      # inline code
+    text = re.sub(r"^#{1,6}\s*", "", text, flags=re.MULTILINE)  # headings
+    text = re.sub(r"\[(.+?)\]\(.+?\)", r"\1", text)        # links
+    text = re.sub(r"[#>~|]", "", text)                     # leftover symbols
+    return text.strip()
+
+
 def speak(text: str) -> None:
     """Convert text to speech using ElevenLabs and play it immediately."""
+    text = _clean(text)
     print(f"[JARVIS] {text}")
     client = _get_client()
     audio = client.text_to_speech.convert(

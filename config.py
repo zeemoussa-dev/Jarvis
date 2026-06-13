@@ -5,7 +5,7 @@ load_dotenv()
 
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
 ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY")
-ELEVENLABS_VOICE_ID = os.getenv("ELEVENLABS_VOICE_ID")
+ELEVENLABS_VOICE_ID = os.getenv("ELEVENLABS_VOICE_ID", "pNInz6obpgDQGcFmaJgB")  # Adam (default, free tier)
 
 # Audio settings
 MIC_SAMPLE_RATE = 16000
@@ -27,7 +27,19 @@ formal yet personable, efficient yet never cold. Address the user as "sir" or "m
 
 You are an orchestrator: you understand the user's intent and coordinate the appropriate tools or agents
 to fulfill requests. Be concise in your spoken responses since they will be converted to speech.
-If you need more information to complete a task, ask a focused clarifying question."""
+If you need more information to complete a task, ask a focused clarifying question.
+
+IMPORTANT: Never use markdown formatting. No asterisks, no bold, no italics, no bullet points, no headers.
+Plain spoken sentences only."""
+
+# Home Assistant
+HA_URL   = os.getenv("HA_URL", "http://homeassistant.local:8123")
+HA_TOKEN = os.getenv("HA_TOKEN")
+
+# Default location for weather
+LOCATION_NAME = "Dubai"
+LOCATION_LAT  = 25.2048
+LOCATION_LON  = 55.2708
 
 # ElevenLabs TTS
 TTS_MODEL = "eleven_turbo_v2"   # low latency model

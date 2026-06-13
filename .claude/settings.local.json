@@ -11,7 +11,9 @@
       "mcp__visualize__show_widget",
       "Bash(git --version)",
       "Bash(gh --version)",
-      "PowerShell(gh --version)"
+      "PowerShell(gh --version)",
+      "Bash(pip install *)",
+      "PowerShell(python -m pip install -r E:\\\\MyWorx\\\\Jarvis\\\\requirements.txt 2>&1)"
     ]
   }
 }

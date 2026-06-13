@@ -2,16 +2,6 @@ import io
 import numpy as np
 import sounddevice as sd
 import soundfile as sf
-import pyaudio
-
-_pyaudio = None
-
-
-def get_pyaudio() -> pyaudio.PyAudio:
-    global _pyaudio
-    if _pyaudio is None:
-        _pyaudio = pyaudio.PyAudio()
-    return _pyaudio
 
 
 def play_audio_bytes(audio_bytes: bytes) -> None:

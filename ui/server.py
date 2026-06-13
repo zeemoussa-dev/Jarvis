@@ -4,6 +4,7 @@ Runs in a background thread alongside the main audio loop.
 """
 
 import asyncio
+import json
 import threading
 import webbrowser
 from pathlib import Path
@@ -14,6 +15,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from core import state as jarvis_state
+from agents import AGENT_TOOLS
 
 app = FastAPI()
 
@@ -35,8 +37,10 @@ async def current_state():
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     q = jarvis_state.subscribe()
-    # Send current state immediately on connect
-    await websocket.send_text(f'{{"state": "{jarvis_state.get_state().value}"}}')
+    # Send current state + agent list immediately on connect
+    await websocket.send_text(json.dumps({"type": "state", "state": jarvis_state.get_state().value}))
+    agent_names = [t["name"] for t in AGENT_TOOLS]
+    await websocket.send_text(json.dumps({"type": "agents", "agents": agent_names}))
     try:
         while True:
             payload = await q.get()
