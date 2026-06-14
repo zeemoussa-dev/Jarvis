@@ -36,6 +36,35 @@ Plain spoken sentences only."""
 HA_URL   = os.getenv("HA_URL", "http://homeassistant.local:8123")
 HA_TOKEN = os.getenv("HA_TOKEN")
 
+# Radarr
+RADARR_URL = os.getenv("RADARR_URL", "http://localhost:7878")
+RADARR_KEY = os.getenv("RADARR_KEY")
+
+# Sonarr
+SONARR_URL = os.getenv("SONARR_URL", "http://localhost:8989")
+SONARR_KEY = os.getenv("SONARR_KEY")
+
+# Plex
+PLEX_URL   = os.getenv("PLEX_URL", "http://localhost:32400")
+PLEX_TOKEN = os.getenv("PLEX_TOKEN")
+
+# HuggingFace (for local LLM)
+HF_TOKEN = os.getenv("HF_TOKEN")
+
+# qBittorrent
+QBIT_URL  = os.getenv("QBIT_URL", "http://localhost:8080")
+QBIT_USER = os.getenv("QBIT_USER", "admin")
+QBIT_PASS = os.getenv("QBIT_PASS", "")
+
+# People — maps spoken names to their WiFi device tracker entity
+HA_PEOPLE = {
+    "mahmoud": "device_tracker.moussa_fold_7",
+    "me":      "device_tracker.moussa_fold_7",
+    "wife":    "device_tracker.iphone_2",
+    "karma":   "device_tracker.iphone_2",
+    "mariam":  "device_tracker.iphone_2",
+}
+
 # Default location for weather
 LOCATION_NAME = "Dubai"
 LOCATION_LAT  = 25.2048

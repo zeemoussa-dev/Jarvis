@@ -5,6 +5,9 @@ Run:  python main.py
 
 import sys
 import time
+import subprocess
+import os
+import urllib.request
 
 from core.wake_word import WakeWordDetector
 from core.stt import transcribe
@@ -17,6 +20,9 @@ from ui.server import start as start_ui
 # Silence after TTS playback before the mic re-opens (prevents echo re-trigger)
 POST_SPEAK_DELAY = 0.6
 
+ELECTRON_DIR = os.path.join(os.path.dirname(__file__), "electron")
+ELECTRON_EXE = r"C:\Program Files\nodejs\node_modules\.bin\electron.cmd"
+
 BOOT_MESSAGE = (
     "J.A.R.V.I.S. online. All systems nominal. How may I assist you, sir?"
 )
@@ -28,16 +34,31 @@ def main() -> None:
     orchestrator = Orchestrator()
     detector = WakeWordDetector()
 
+    # Launch the Electron UI immediately on boot
+    try:
+        electron_bin = os.path.join(ELECTRON_DIR, "node_modules", ".bin", "electron.cmd")
+        env = os.environ.copy()
+        env["PATH"] = r"C:\Program Files\nodejs" + os.pathsep + env.get("PATH", "")
+        subprocess.Popen([electron_bin, "."], cwd=ELECTRON_DIR, env=env)
+        print("[Jarvis] Electron app launched.")
+    except Exception as e:
+        print(f"[Jarvis] Could not launch Electron app: {e}")
+
     set_state(JarvisState.SPEAKING)
     speak(BOOT_MESSAGE)
     time.sleep(POST_SPEAK_DELAY)
     set_state(JarvisState.IDLE)
 
     try:
-        missed = 0
         while True:
             set_state(JarvisState.IDLE)
             detector.listen()
+
+            # Bring the Electron window to focus on every wake word
+            try:
+                urllib.request.urlopen("http://127.0.0.1:8766/focus", timeout=1)
+            except Exception:
+                pass
 
             # Record the user's command immediately — no "Yes, sir?" to echo back
             set_state(JarvisState.LISTENING)
@@ -47,14 +68,7 @@ def main() -> None:
             set_state(JarvisState.THINKING)
             user_text = transcribe(audio)
             if not user_text:
-                if missed == 0:
-                    set_state(JarvisState.SPEAKING)
-                    speak("I didn't catch that, sir.")
-                    time.sleep(POST_SPEAK_DELAY)
-                missed += 1
                 continue
-
-            missed = 0
 
             print(f"[User] {user_text}")
             broadcast_text("user", user_text)

@@ -75,6 +75,54 @@ def _run_script(entity_id: str) -> str:
     return f"Script '{entity_id}' is running."
 
 
+# ── Presence ─────────────────────────────────────────────────────────────────
+
+def _check_presence(person: str) -> str:
+    """Check if a named person is home based on their WiFi device tracker."""
+    key = person.lower().strip()
+    entity_id = config.HA_PEOPLE.get(key)
+    if not entity_id:
+        known = ", ".join(config.HA_PEOPLE.keys())
+        return f"I don't have a device registered for '{person}'. Known people: {known}."
+    with _client() as c:
+        resp = c.get(f"/api/states/{entity_id}")
+        if resp.status_code == 404:
+            return f"Device tracker '{entity_id}' not found in Home Assistant."
+        resp.raise_for_status()
+    state = resp.json()["state"]
+    is_home = state == "home"
+    name = person.capitalize()
+    if is_home:
+        return f"Yes, {name} is home. Their device is connected to the WiFi."
+    else:
+        return f"No, {name} is not home. Their device is not on the network."
+
+
+def _who_is_home() -> str:
+    """Return a summary of who is currently home based on WiFi presence."""
+    seen = {}
+    with _client() as c:
+        for name, entity_id in config.HA_PEOPLE.items():
+            if entity_id in seen:
+                continue
+            seen[entity_id] = True
+            resp = c.get(f"/api/states/{entity_id}")
+            if resp.status_code != 200:
+                continue
+            state = resp.json()["state"]
+            seen[entity_id] = (name.capitalize(), state == "home")
+
+    home     = [v[0] for v in seen.values() if isinstance(v, tuple) and v[1]]
+    away     = [v[0] for v in seen.values() if isinstance(v, tuple) and not v[1]]
+
+    parts = []
+    if home:
+        parts.append(f"{', '.join(home)} {'is' if len(home)==1 else 'are'} home.")
+    if away:
+        parts.append(f"{', '.join(away)} {'is' if len(away)==1 else 'are'} away.")
+    return " ".join(parts) if parts else "Could not determine who is home."
+
+
 # ── Single aggregated tool ────────────────────────────────────────────────────
 
 def smart_home(
@@ -84,6 +132,7 @@ def smart_home(
     light_action: str = None,
     brightness_pct: int = None,
     color_name: str = None,
+    person: str = None,
 ) -> str:
     try:
         if action == "list_entities":
@@ -96,6 +145,10 @@ def smart_home(
             return _trigger_automation(entity_id)
         elif action == "run_script":
             return _run_script(entity_id)
+        elif action == "check_presence":
+            return _check_presence(person or "")
+        elif action == "who_is_home":
+            return _who_is_home()
         else:
             return f"[Error] Unknown action '{action}'."
     except Exception as exc:
@@ -116,7 +169,7 @@ TOOL_SCHEMA = {
         "properties": {
             "action": {
                 "type": "string",
-                "enum": ["list_entities", "get_state", "control_light", "trigger_automation", "run_script"],
+                "enum": ["list_entities", "get_state", "control_light", "trigger_automation", "run_script", "check_presence", "who_is_home"],
                 "description": "The smart home action to perform.",
             },
             "entity_id": {
@@ -139,6 +192,10 @@ TOOL_SCHEMA = {
             "color_name": {
                 "type": "string",
                 "description": "Light colour name e.g. 'red', 'warm white', 'blue' (optional, control_light only).",
+            },
+            "person": {
+                "type": "string",
+                "description": "Person name for check_presence: 'wife', 'karma', 'mariam', 'mahmoud', 'me'.",
             },
         },
         "required": ["action"],

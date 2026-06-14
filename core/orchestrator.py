@@ -2,6 +2,8 @@ from anthropic import Anthropic
 
 import config
 from agents import AGENT_TOOLS, dispatch_tool
+from core.router import needs_cloud
+from local_llm import client as local_llm
 
 _client = Anthropic(api_key=config.ANTHROPIC_API_KEY)
 
@@ -12,9 +14,41 @@ MAX_HISTORY = 20         # keep only the last N messages to avoid runaway contex
 class Orchestrator:
     def __init__(self) -> None:
         self.history: list[dict] = []
+        self._local_available: bool | None = None  # cached at first call
+
+    def _use_local(self) -> bool:
+        """Return True if local LLM is running and this turn doesn't need tools."""
+        if self._local_available is None:
+            self._local_available = local_llm.is_available()
+            if self._local_available:
+                print("[Router] Local LLM is online.")
+            else:
+                print("[Router] Local LLM not detected — using Claude for all requests.")
+        return self._local_available
 
     def process(self, user_input: str) -> str:
-        """Send user input to Claude, handle tool calls, return final text response."""
+        """Route to local LLM or Claude, handle tool calls, return final text."""
+        # ── Routing decision ──────────────────────────────────────────────────
+        if self._use_local() and not needs_cloud(user_input):
+            print("[Router] → Local LLM")
+            # Build a plain history list for the local model
+            plain_history = [
+                {"role": m["role"], "content": m["content"]}
+                for m in self.history
+                if isinstance(m.get("content"), str)
+            ]
+            try:
+                response = local_llm.chat(user_input, history=plain_history)
+                self.history.append({"role": "user", "content": user_input})
+                self.history.append({"role": "assistant", "content": response})
+                self._trim_history()
+                return response
+            except Exception as exc:
+                print(f"[Router] Local LLM error ({exc}), falling back to Claude.")
+                self._local_available = False  # stop trying local this session
+
+        # ── Claude (cloud) path ───────────────────────────────────────────────
+        print("[Router] → Claude (cloud)")
         self.history.append({"role": "user", "content": user_input})
         self._trim_history()
 
@@ -47,7 +81,6 @@ class Orchestrator:
                 retries = tool_retry_counts.get(tool_use.name, 0)
 
                 if retries >= 1:
-                    # Already failed once — give up on this tool and tell Claude
                     print(f"[Orchestrator] Tool '{tool_use.name}' failed twice, aborting.")
                     tool_results.append({
                         "type": "tool_result",
@@ -94,6 +127,5 @@ class Orchestrator:
         self.history.clear()
 
     def _trim_history(self) -> None:
-        """Keep history bounded; always preserve the last user message."""
         if len(self.history) > MAX_HISTORY:
             self.history = self.history[-MAX_HISTORY:]

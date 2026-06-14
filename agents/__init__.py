@@ -1,14 +1,26 @@
 from agents import briefing as _briefing
 from agents import home_assistant as _ha
+from agents import qbittorrent as _qbit
+from agents import radarr as _radarr
+from agents import sonarr as _sonarr
+from agents import plex as _plex
 
 AGENT_TOOLS: list[dict] = [
     _briefing.TOOL_SCHEMA,
     _ha.TOOL_SCHEMA,
+    _qbit.TOOL_SCHEMA,
+    _radarr.TOOL_SCHEMA,
+    _sonarr.TOOL_SCHEMA,
+    _plex.TOOL_SCHEMA,
 ]
 
 _DISPATCH: dict[str, callable] = {
     "get_briefing": lambda **_: _briefing.get_briefing(agent_count=len(AGENT_TOOLS)),
     **_ha.DISPATCH,
+    **_qbit.DISPATCH,
+    **_radarr.DISPATCH,
+    **_sonarr.DISPATCH,
+    **_plex.DISPATCH,
 }
 
 

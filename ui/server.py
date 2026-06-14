@@ -6,7 +6,6 @@ Runs in a background thread alongside the main audio loop.
 import asyncio
 import json
 import threading
-import webbrowser
 from pathlib import Path
 
 import uvicorn
@@ -64,8 +63,3 @@ def start(host: str = "127.0.0.1", port: int = 8765) -> None:
 
     thread = threading.Thread(target=_run, daemon=True)
     thread.start()
-
-    # Give the server a moment then open the browser
-    import time
-    time.sleep(1.2)
-    webbrowser.open(f"http://{host}:{port}")
