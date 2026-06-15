@@ -4,6 +4,7 @@ from agents import qbittorrent as _qbit
 from agents import radarr as _radarr
 from agents import sonarr as _sonarr
 from agents import plex as _plex
+from agents import outlook as _outlook
 
 AGENT_TOOLS: list[dict] = [
     _briefing.TOOL_SCHEMA,
@@ -12,6 +13,7 @@ AGENT_TOOLS: list[dict] = [
     _radarr.TOOL_SCHEMA,
     _sonarr.TOOL_SCHEMA,
     _plex.TOOL_SCHEMA,
+    _outlook.TOOL_SCHEMA,
 ]
 
 _DISPATCH: dict[str, callable] = {
@@ -21,6 +23,7 @@ _DISPATCH: dict[str, callable] = {
     **_radarr.DISPATCH,
     **_sonarr.DISPATCH,
     **_plex.DISPATCH,
+    **_outlook.DISPATCH,
 }
 
 

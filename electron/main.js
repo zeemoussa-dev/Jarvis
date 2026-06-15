@@ -24,23 +24,14 @@ if (!gotLock) {
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: WINDOW_WIDTH,
-    height: WINDOW_HEIGHT,
-    minWidth: 900,
-    minHeight: 600,
+    fullscreen: true,
     backgroundColor: '#030d12',
-    titleBarStyle: 'hidden',
-    titleBarOverlay: {
-      color: '#030d12',
-      symbolColor: '#00d4ff',
-      height: 32,
-    },
     icon: path.join(__dirname, 'icon.png'),
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
     },
-    show: false, // show after ready-to-show to avoid flash
+    show: false,
   });
 
   mainWindow.loadURL(UI_URL);

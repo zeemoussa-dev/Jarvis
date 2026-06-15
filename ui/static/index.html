@@ -137,6 +137,18 @@ canvas{position:absolute;top:0;left:0;}
 
 /* ── MINI SIDE LINES ── */
 .hline{height:1px;background:linear-gradient(90deg,rgba(0,180,220,0.3),transparent);}
+
+/* ── MOOD BADGE ── */
+.mood-badge{
+  font-family:'Orbitron',monospace;font-size:9px;letter-spacing:3px;
+  padding:4px 10px;border:1px solid;text-transform:uppercase;
+  transition:all 0.4s ease;
+}
+.mood-personal{color:#00d4ff;border-color:rgba(0,212,255,0.45);background:rgba(0,212,255,0.07);}
+.mood-work{color:#f0b429;border-color:rgba(240,180,41,0.45);background:rgba(240,180,41,0.07);}
+.mood-demo{color:#ff4d6d;border-color:rgba(255,77,109,0.55);background:rgba(255,77,109,0.09);
+  box-shadow:0 0 12px rgba(255,77,109,0.2);animation:demo-pulse 2s ease-in-out infinite;}
+@keyframes demo-pulse{0%,100%{box-shadow:0 0 12px rgba(255,77,109,0.2);}50%{box-shadow:0 0 22px rgba(255,77,109,0.45);}}
 </style>
 </head>
 <body>
@@ -157,6 +169,7 @@ canvas{position:absolute;top:0;left:0;}
       <div class="badge"><div class="dot cyan"></div>NEURAL LINK ACTIVE</div>
       <div class="badge"><div class="dot gold"></div>CLAUDE CONNECTED</div>
       <div class="badge"><div class="dot green"></div>VOICE ONLINE</div>
+      <div id="mood-badge" class="mood-badge mood-personal">PERSONAL MODE</div>
     </div>
     <div id="clock">--:--:--</div>
   </div>
@@ -168,8 +181,9 @@ canvas{position:absolute;top:0;left:0;}
     <div class="srow"><span class="slabel">STATE</span>
       <div id="state-pill"><div class="dot cyan"></div><span id="state-txt">STANDBY</span></div>
     </div>
-    <div class="srow"><span class="slabel">AI CORE</span><span class="sval c">CLAUDE SONNET</span></div>
-    <div class="srow"><span class="slabel">VOICE ENGINE</span><span class="sval g">ELEVENLABS</span></div>
+    <div class="srow"><span class="slabel">AI CORE</span><span class="sval c" id="si-ai-core">CLAUDE SONNET</span></div>
+    <div class="srow"><span class="slabel">VOICE ENGINE</span><span class="sval g" id="si-tts">EDGE TTS</span></div>
+    <div class="srow"><span class="slabel">LOCAL LLM</span><span class="sval c" id="si-llm">LLAMA 3.1 8B</span></div>
     <div class="srow"><span class="slabel">STT MODEL</span><span class="sval c">WHISPER BASE</span></div>
     <div class="srow"><span class="slabel">WAKE WORD</span><span class="sval g">HEY JARVIS</span></div>
 
@@ -177,17 +191,27 @@ canvas{position:absolute;top:0;left:0;}
     <div class="ptitle">PERFORMANCE</div>
 
     <div class="mbar-wrap">
-      <div class="mbar-labels"><span>NEURAL LOAD</span><span id="cpu-val">--</span></div>
+      <div class="mbar-labels"><span>CPU</span><span id="cpu-val">--</span></div>
       <div class="mbar"><div class="mbar-fill c" id="cpu-bar" style="width:0%"></div></div>
     </div>
     <div class="mbar-wrap">
-      <div class="mbar-labels"><span>MEMORY</span><span id="mem-val">--</span></div>
+      <div class="mbar-labels"><span>RAM</span><span id="mem-val">--</span></div>
       <div class="mbar"><div class="mbar-fill y" id="mem-bar" style="width:0%"></div></div>
     </div>
     <div class="mbar-wrap">
-      <div class="mbar-labels"><span>MIC LEVEL</span><span id="mic-val">--</span></div>
-      <div class="mbar"><div class="mbar-fill g" id="mic-bar" style="width:0%"></div></div>
+      <div class="mbar-labels"><span>GPU</span><span id="gpu-val">--</span></div>
+      <div class="mbar"><div class="mbar-fill g" id="gpu-bar" style="width:0%"></div></div>
     </div>
+    <div class="mbar-wrap">
+      <div class="mbar-labels"><span>GPU MEM</span><span id="gpu-mem-val">--</span></div>
+      <div class="mbar"><div class="mbar-fill c" id="gpu-mem-bar" style="width:0%"></div></div>
+    </div>
+
+    <div class="hline"></div>
+    <div class="ptitle">TOKEN USAGE</div>
+    <div class="srow"><span class="slabel">LOCAL (LLAMA)</span><span class="sval g" id="tok-local">0</span></div>
+    <div class="srow"><span class="slabel">CLOUD IN</span><span class="sval c" id="tok-cloud-in">0</span></div>
+    <div class="srow"><span class="slabel">CLOUD OUT</span><span class="sval y" id="tok-cloud-out">0</span></div>
 
     <div class="hline"></div>
     <div class="ptitle">ACTIVE AGENTS</div>
@@ -214,8 +238,8 @@ canvas{position:absolute;top:0;left:0;}
     <div id="status-txt">VOICE DETECTION ACTIVE</div>
     <div class="sys-info">
       <div class="si">MODEL <span>SONNET 4.6</span></div>
-      <div class="si">TTS <span>ELEVENLABS</span></div>
-      <div class="si">BUILD <span>1.0.0</span></div>
+      <div class="si">TTS <span id="bot-tts">EDGE TTS</span></div>
+      <div class="si">BUILD <span id="bot-version">V0.0.103</span></div>
     </div>
   </div>
 </div>
@@ -258,25 +282,51 @@ function tick(){
 }
 setInterval(tick,1000);tick();
 
-// simulated metrics
-function updateMetrics(){
-  const base=state==='thinking'?78:state==='speaking'?58:state==='listening'?48:32;
-  const cpu=Math.min(99,base+Math.round((Math.random()-0.5)*14));
-  const mem=Math.min(99,60+Math.round((Math.random()-0.5)*10));
-  document.getElementById('cpu-val').textContent=cpu+'%';
-  document.getElementById('cpu-bar').style.width=cpu+'%';
-  document.getElementById('mem-val').textContent=mem+'%';
-  document.getElementById('mem-bar').style.width=mem+'%';
-  if(state==='listening'){
-    const v=Math.round(Math.random()*80+15);
-    document.getElementById('mic-val').textContent=v+'%';
-    document.getElementById('mic-bar').style.width=v+'%';
-  } else {
-    document.getElementById('mic-val').textContent='--';
-    document.getElementById('mic-bar').style.width='0%';
+function updateStats(d){
+  if(d.cpu_pct!=null){
+    document.getElementById('cpu-val').textContent=d.cpu_pct+'%';
+    document.getElementById('cpu-bar').style.width=d.cpu_pct+'%';
+  }
+  if(d.mem_pct!=null){
+    const label=d.mem_used_gb+'GB / '+d.mem_total_gb+'GB';
+    document.getElementById('mem-val').textContent=label;
+    document.getElementById('mem-bar').style.width=d.mem_pct+'%';
+  }
+  if(d.gpu_pct!=null){
+    document.getElementById('gpu-val').textContent=d.gpu_pct+'%';
+    document.getElementById('gpu-bar').style.width=d.gpu_pct+'%';
+  }
+  if(d.gpu_mem_used_gb!=null){
+    const label=d.gpu_mem_used_gb+'GB / '+d.gpu_mem_total_gb+'GB';
+    document.getElementById('gpu-mem-val').textContent=label;
+    document.getElementById('gpu-mem-bar').style.width=Math.round(d.gpu_mem_used_gb/d.gpu_mem_total_gb*100)+'%';
   }
 }
-setInterval(updateMetrics,700);
+
+function updateTokens(d){
+  document.getElementById('tok-local').textContent=d.local.toLocaleString();
+  document.getElementById('tok-cloud-in').textContent=d.cloud_in.toLocaleString();
+  document.getElementById('tok-cloud-out').textContent=d.cloud_out.toLocaleString();
+}
+
+function updateSysinfo(d){
+  if(d.ai_core){
+    const el=document.getElementById('si-ai-core');
+    el.textContent=d.ai_core;
+    el.className='sval '+(d.ai_core.startsWith('LOCAL')?'g':'c');
+  }
+  if(d.tts_engine){
+    const el=document.getElementById('si-tts');
+    el.textContent=d.tts_engine;
+    el.className='sval '+(d.tts_engine==='XTTS V2'?'g':'y');
+    const bot=document.getElementById('bot-tts');
+    if(bot)bot.textContent=d.tts_engine;
+  }
+  if(d.version){
+    const el=document.getElementById('bot-version');
+    if(el)el.textContent=d.version;
+  }
+}
 
 // agents — populated from backend via WS
 const FRIENDLY = {
@@ -285,7 +335,8 @@ const FRIENDLY = {
   qbittorrent:  'QBITTORRENT',
   movie_manager:'MOVIE MANAGER',
   tv_manager:   'TV MANAGER',
-  plex_manager: 'PLEX',
+  plex_manager:     'PLEX',
+  outlook_manager:  'OUTLOOK',
 };
 
 function renderAgents(tools){
@@ -308,6 +359,14 @@ function addMessage(role,text){
   log.scrollTop=log.scrollHeight;
 }
 
+// Mood badge
+function setMoodBadge(mood){
+  const el=document.getElementById('mood-badge');
+  if(!el)return;
+  el.className='mood-badge mood-'+mood;
+  el.textContent=mood.toUpperCase()+' MODE';
+}
+
 // WebSocket
 function connect(){
   const ws=new WebSocket(`ws://${location.host}/ws`);
@@ -318,6 +377,10 @@ function connect(){
       else if(d.state)setState(d.state);
       if(d.type==='message')addMessage(d.role,d.text);
       if(d.type==='agents')renderAgents(d.agents);
+      if(d.type==='mood')setMoodBadge(d.mood);
+      if(d.type==='stats')updateStats(d);
+      if(d.type==='tokens')updateTokens(d);
+      if(d.type==='sysinfo')updateSysinfo(d);
     }catch(_){}
   };
   ws.onclose=()=>setTimeout(connect,2000);

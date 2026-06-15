@@ -69,9 +69,8 @@ def _trigger_automation(entity_id: str) -> str:
 
 
 def _run_script(entity_id: str) -> str:
-    script_name = entity_id.replace("script.", "")
     with _client() as c:
-        c.post(f"/api/services/script/{script_name}", json={}).raise_for_status()
+        c.post("/api/services/script/turn_on", json={"entity_id": entity_id}).raise_for_status()
     return f"Script '{entity_id}' is running."
 
 

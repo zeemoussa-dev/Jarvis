@@ -44,6 +44,16 @@ _CLOUD_PATTERNS: list[str] = [
     r"\bpause\b|\bresume\b", r"\bseeding\b",
     # General agent triggers
     r"\bagent\b", r"\bsystem status\b", r"\ball systems\b",
+    # Outlook — email
+    r"\bemail(s)?\b", r"\binbox\b", r"\bunread\b", r"\bmessage(s)?\b",
+    r"\bsend.*(email|mail|message)\b", r"\bmail\b", r"\bcorresponden\b",
+    r"\bdewa\b", r"\baqua\b",
+    # Outlook — calendar
+    r"\b(meeting|meetings|appointment|appointments|schedule|calendar|event)\b",
+    r"\btoday.*(plan|agenda|busy)\b", r"\bwhat.*(today|tomorrow|week)\b",
+    r"\bdo i have\b", r"\bany (meetings|calls|appointments)\b",
+    r"\b(book|add|create|schedule).*(meeting|call|appointment|event)\b",
+    r"\bwhen (is|am|are)\b",
 ]
 
 _CLOUD_RE = re.compile("|".join(_CLOUD_PATTERNS), re.IGNORECASE)

@@ -13,6 +13,7 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
+import config
 from core import state as jarvis_state
 from agents import AGENT_TOOLS
 
@@ -32,14 +33,34 @@ async def current_state():
     return {"state": jarvis_state.get_state().value}
 
 
+@app.get("/version")
+async def version():
+    return {"version": config.VERSION}
+
+
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     q = jarvis_state.subscribe()
-    # Send current state + agent list immediately on connect
+    # Send current state + agent list + tokens immediately on connect
     await websocket.send_text(json.dumps({"type": "state", "state": jarvis_state.get_state().value}))
     agent_names = [t["name"] for t in AGENT_TOOLS]
     await websocket.send_text(json.dumps({"type": "agents", "agents": agent_names}))
+    from core.mood import get_mood
+    await websocket.send_text(json.dumps({"type": "mood", "mood": get_mood().value}))
+    await websocket.send_text(json.dumps({
+        "type": "tokens",
+        "local": jarvis_state._tokens_local,
+        "cloud_in": jarvis_state._tokens_cloud_in,
+        "cloud_out": jarvis_state._tokens_cloud_out,
+    }))
+    from core.tts import _xtts_available
+    await websocket.send_text(json.dumps({
+        "type": "sysinfo",
+        "tts_engine": "XTTS V2" if _xtts_available else "EDGE TTS",
+        "ai_core": "CLAUDE SONNET",
+        "version": config.VERSION,
+    }))
     try:
         while True:
             payload = await q.get()
@@ -61,5 +82,6 @@ def start(host: str = "127.0.0.1", port: int = 8765) -> None:
         server = uvicorn.Server(config)
         loop.run_until_complete(server.serve())
 
+    jarvis_state.start_stats_broadcaster()
     thread = threading.Thread(target=_run, daemon=True)
     thread.start()

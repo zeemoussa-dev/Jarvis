@@ -1,9 +1,25 @@
 from anthropic import Anthropic
+from datetime import datetime, timezone, timedelta
 
 import config
 from agents import AGENT_TOOLS, dispatch_tool
 from core.router import needs_cloud
+from core.state import add_local_tokens, add_cloud_tokens
 from local_llm import client as local_llm
+
+_DUBAI = timezone(timedelta(hours=4))
+
+
+def _runtime_system_prompt() -> str:
+    now = datetime.now(_DUBAI)
+    date_str = now.strftime("%A, %d %B %Y")
+    time_str = now.strftime("%I:%M %p")
+    return (
+        config.SYSTEM_PROMPT
+        + f"\n\nCURRENT DATE AND TIME (Dubai, UTC+4): {date_str}, {time_str}. "
+        "Use this when resolving relative dates like 'today', 'tomorrow', 'next Friday', 'in an hour', etc. "
+        "Always convert to ISO format YYYY-MM-DDTHH:MM:SS when calling create_event."
+    )
 
 _client = Anthropic(api_key=config.ANTHROPIC_API_KEY)
 
@@ -31,6 +47,9 @@ class Orchestrator:
         # ── Routing decision ──────────────────────────────────────────────────
         if self._use_local() and not needs_cloud(user_input):
             print("[Router] → Local LLM")
+            add_cloud_tokens(0, 0)  # ensure sysinfo fires
+            from core.state import _emit
+            _emit({"type": "sysinfo", "ai_core": "LOCAL LLAMA"})
             # Build a plain history list for the local model
             plain_history = [
                 {"role": m["role"], "content": m["content"]}
@@ -39,6 +58,7 @@ class Orchestrator:
             ]
             try:
                 response = local_llm.chat(user_input, history=plain_history)
+                add_local_tokens(len(user_input.split()) + len(response.split()))
                 self.history.append({"role": "user", "content": user_input})
                 self.history.append({"role": "assistant", "content": response})
                 self._trim_history()
@@ -49,6 +69,8 @@ class Orchestrator:
 
         # ── Claude (cloud) path ───────────────────────────────────────────────
         print("[Router] → Claude (cloud)")
+        from core.state import _emit
+        _emit({"type": "sysinfo", "ai_core": "CLAUDE SONNET"})
         self.history.append({"role": "user", "content": user_input})
         self._trim_history()
 
@@ -58,7 +80,7 @@ class Orchestrator:
             response = _client.messages.create(
                 model=config.CLAUDE_MODEL,
                 max_tokens=1024,
-                system=config.SYSTEM_PROMPT,
+                system=_runtime_system_prompt(),
                 tools=AGENT_TOOLS,
                 messages=self.history,
             )
@@ -71,6 +93,7 @@ class Orchestrator:
                 elif block.type == "tool_use":
                     tool_uses.append(block)
 
+            add_cloud_tokens(response.usage.input_tokens, response.usage.output_tokens)
             self.history.append({"role": "assistant", "content": response.content})
 
             if response.stop_reason == "end_turn" or not tool_uses:
@@ -114,7 +137,7 @@ class Orchestrator:
         final = _client.messages.create(
             model=config.CLAUDE_MODEL,
             max_tokens=256,
-            system=config.SYSTEM_PROMPT,
+            system=_runtime_system_prompt(),
             messages=self.history,
         )
         text = " ".join(

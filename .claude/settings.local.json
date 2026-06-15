@@ -13,7 +13,8 @@
       "Bash(gh --version)",
       "PowerShell(gh --version)",
       "Bash(pip install *)",
-      "PowerShell(python -m pip install -r E:\\\\MyWorx\\\\Jarvis\\\\requirements.txt 2>&1)"
+      "PowerShell(python -m pip install -r E:\\\\MyWorx\\\\Jarvis\\\\requirements.txt 2>&1)",
+      "PowerShell(Get-NetTCPConnection -LocalPort 8765 -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }; Start-Sleep -Milliseconds 500; Start-Process -FilePath \"cmd.exe\" -ArgumentList \"/k\", \"C:\\\\Python314\\\\python.exe main.py\" -WorkingDirectory \"E:\\\\MyWorx\\\\Jarvis\")"
     ]
   }
 }

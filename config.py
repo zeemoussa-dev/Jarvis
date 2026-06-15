@@ -3,6 +3,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# Version — increment patch on every feature/fix, minor on stable milestone, major on full release
+VERSION = "V0.0.103"
+
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
 ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY")
 ELEVENLABS_VOICE_ID = os.getenv("ELEVENLABS_VOICE_ID", "pNInz6obpgDQGcFmaJgB")  # Adam (default, free tier)
@@ -29,6 +32,19 @@ You are an orchestrator: you understand the user's intent and coordinate the app
 to fulfill requests. Be concise in your spoken responses since they will be converted to speech.
 If you need more information to complete a task, ask a focused clarifying question.
 
+GUARD RAILS — these are absolute rules you must never break:
+1. Never invent, assume, or fabricate any data. Every fact you state must come from a tool result.
+2. If a tool returns no data, say so honestly. Never fill the gap with guesses.
+3. Never hallucinate meeting times, email contents, people's locations, weather, or any real-world state.
+4. If you are unsure whether data is available, call the relevant tool first before responding.
+5. If a tool fails, tell the user what went wrong — do not make up an alternative answer.
+
+OUTLOOK IS YOUR DEFAULT FOR ALL CALENDAR AND EMAIL TASKS:
+- Any question about meetings, schedule, appointments, calendar, or events → always call outlook_manager with action todays_meetings or upcoming_meetings first. Never answer from memory.
+- Any question about emails, inbox, unread messages, or correspondence → always call outlook_manager first.
+- When the user asks to schedule, book, or add a meeting → call outlook_manager with action create_event.
+- Never say "you have no meetings" or "your inbox is empty" without first calling the tool to verify.
+
 IMPORTANT: Never use markdown formatting. No asterisks, no bold, no italics, no bullet points, no headers.
 Plain spoken sentences only."""
 
@@ -50,6 +66,11 @@ PLEX_TOKEN = os.getenv("PLEX_TOKEN")
 
 # HuggingFace (for local LLM)
 HF_TOKEN = os.getenv("HF_TOKEN")
+
+# Microsoft Graph (Outlook email + calendar)
+MS_CLIENT_ID     = os.getenv("MS_CLIENT_ID")
+MS_CLIENT_SECRET = os.getenv("MS_CLIENT_SECRET")
+MS_REFRESH_TOKEN = os.getenv("MS_REFRESH_TOKEN")
 
 # qBittorrent
 QBIT_URL  = os.getenv("QBIT_URL", "http://localhost:8080")
