@@ -13,7 +13,14 @@ import edge_tts
 VOICE = "en-GB-RyanNeural"      # Edge TTS fallback voice
 XTTS_URL = "http://localhost:8002"
 _xtts_available: bool = False
-_xtts_checked: bool = False  # check once per session after first speak
+_xtts_checked: bool = False  # set True after first health-check; reset by reset_xtts_check()
+
+
+def reset_xtts_check() -> None:
+    """Force a fresh health-check on the next speak() call (call after ensuring service is up)."""
+    global _xtts_checked, _xtts_available
+    _xtts_checked = False
+    _xtts_available = False
 
 
 def _clean(text: str) -> str:

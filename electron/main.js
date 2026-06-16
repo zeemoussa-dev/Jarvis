@@ -98,7 +98,7 @@ app.on('window-all-closed', (e) => {
 
 // Focus endpoint — Python calls http://localhost:8766/focus to bring window forward
 const http = require('http');
-http.createServer((req, res) => {
+const focusServer = http.createServer((req, res) => {
   res.writeHead(200);
   res.end('ok');
   if (mainWindow) {
@@ -106,4 +106,14 @@ http.createServer((req, res) => {
     mainWindow.show();
     mainWindow.focus();
   }
-}).listen(8766, '127.0.0.1');
+});
+focusServer.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    // Another Electron instance already holds 8766 — that's fine, single-instance
+    // lock will have already routed us to the existing window.
+    console.log('[Jarvis] Focus server port 8766 already in use — skipping.');
+  } else {
+    console.error('[Jarvis] Focus server error:', err);
+  }
+});
+focusServer.listen(8766, '127.0.0.1');

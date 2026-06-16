@@ -42,8 +42,16 @@ _CLOUD_PATTERNS: list[str] = [
     # qBittorrent
     r"\btorrent\b", r"\bqbit\b", r"\bdownload(ing|s)?\b",
     r"\bpause\b|\bresume\b", r"\bseeding\b",
-    # General agent triggers
-    r"\bagent\b", r"\bsystem status\b", r"\ball systems\b",
+    # System agent
+    r"\bsystem (report|status|health)\b", r"\ball systems\b",
+    r"\b(cpu|processor) (usage|load|percent)\b",
+    r"\b(ram|memory) (usage|free|used)\b",
+    r"\bgpu (usage|temperature|vram|memory)\b",
+    r"\bdisk (space|usage|free)\b",
+    r"\bnetwork (speed|usage|bandwidth)\b",
+    r"\b(kill|stop|terminate).*(process|program|app)\b",
+    r"\bwindows service\b",
+    r"\bagent\b",
     # Outlook — email
     r"\bemail(s)?\b", r"\binbox\b", r"\bunread\b", r"\bmessage(s)?\b",
     r"\bsend.*(email|mail|message)\b", r"\bmail\b", r"\bcorresponden\b",

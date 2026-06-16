@@ -22,15 +22,50 @@ from ui.server import start as start_ui
 POST_SPEAK_DELAY = 0.6
 
 ELECTRON_DIR = os.path.join(os.path.dirname(__file__), "electron")
-ELECTRON_EXE = r"C:\Program Files\nodejs\node_modules\.bin\electron.cmd"
+TTS_SERVICE_DIR = os.path.join(os.path.dirname(__file__), "tts_service")
+TTS_HEALTH_URL = "http://localhost:8002/health"
+TTS_STARTUP_TIMEOUT = 60  # seconds to wait for XTTS model to load
 
 BOOT_MESSAGE = (
     "JARVIS online. All systems nominal. How may I assist you, sir?"
 )
 
 
+def _launch_xtts() -> None:
+    """Launch the XTTS service in a new console if it isn't already running."""
+    try:
+        urllib.request.urlopen(TTS_HEALTH_URL, timeout=2)
+        print("[Jarvis] XTTS service already running.")
+        return
+    except Exception:
+        pass
+    print("[Jarvis] Starting XTTS service...")
+    bat = os.path.join(TTS_SERVICE_DIR, "start.bat")
+    subprocess.Popen(
+        ["cmd.exe", "/c", bat],
+        cwd=TTS_SERVICE_DIR,
+        creationflags=subprocess.CREATE_NEW_CONSOLE,
+    )
+
+
+def _wait_for_xtts() -> None:
+    """Block until XTTS is ready (up to TTS_STARTUP_TIMEOUT seconds), then reset the TTS check flag."""
+    from core.tts import reset_xtts_check
+    deadline = time.time() + TTS_STARTUP_TIMEOUT
+    while time.time() < deadline:
+        try:
+            urllib.request.urlopen(TTS_HEALTH_URL, timeout=2)
+            print("[Jarvis] XTTS service ready.")
+            reset_xtts_check()
+            return
+        except Exception:
+            time.sleep(2)
+    print("[Jarvis] XTTS did not respond in time — using Edge TTS fallback.")
+
+
 def main() -> None:
-    start_ui()
+    _launch_xtts()   # fire-and-forget: opens the console, doesn't block
+    start_ui()       # UI is live immediately
 
     orchestrator = Orchestrator()
     detector = WakeWordDetector()
@@ -45,6 +80,7 @@ def main() -> None:
     except Exception as e:
         print(f"[Jarvis] Could not launch Electron app: {e}")
 
+    _wait_for_xtts()  # wait here so the boot message uses the correct voice
     set_state(JarvisState.SPEAKING)
     speak(BOOT_MESSAGE)
     time.sleep(POST_SPEAK_DELAY)

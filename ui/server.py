@@ -71,8 +71,46 @@ async def websocket_endpoint(websocket: WebSocket):
         jarvis_state.unsubscribe(q)
 
 
+def _kill_port(port: int) -> None:
+    """Kill any process already holding the given port before we bind to it."""
+    import socket
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        if s.connect_ex(("127.0.0.1", port)) != 0:
+            return  # port is free
+    import psutil, time
+    try:
+        for conn in psutil.net_connections(kind="inet"):
+            if conn.laddr.port == port and conn.pid:
+                try:
+                    proc = psutil.Process(conn.pid)
+                    print(f"[Server] Port {port} held by PID {conn.pid} ({proc.name()}) — terminating.")
+                    proc.terminate()
+                    proc.wait(timeout=3)
+                    time.sleep(0.5)  # give the OS a moment to release the port
+                    return
+                except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
+                    print(f"[Server] Could not terminate PID {conn.pid}: {e}")
+    except psutil.AccessDenied:
+        # Fall back to netstat via subprocess on Windows
+        import subprocess, os
+        result = subprocess.run(
+            ["netstat", "-ano"],
+            capture_output=True, text=True
+        )
+        for line in result.stdout.splitlines():
+            if f":{port} " in line and "LISTENING" in line:
+                parts = line.split()
+                pid = int(parts[-1])
+                print(f"[Server] Port {port} held by PID {pid} (via netstat) — terminating.")
+                os.system(f"taskkill /F /PID {pid}")
+                time.sleep(0.5)
+                return
+
+
 def start(host: str = "127.0.0.1", port: int = 8765) -> None:
-    """Start the UI server in a daemon thread and open the browser."""
+    """Kill any stale Jarvis process on the port, then start the UI server."""
+    _kill_port(port)
+    import time; time.sleep(1.0)  # let OS release the port before binding
 
     def _run():
         loop = asyncio.new_event_loop()

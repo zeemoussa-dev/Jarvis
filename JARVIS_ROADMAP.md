@@ -333,34 +333,176 @@ User can approve or skip steps (future enhancement).
 
 ---
 
+## PILLAR 7 — THREE-SCREEN COMMAND CENTRE
+
+### The Opportunity
+You have 3 monitors. Today Jarvis occupies one fullscreen window and wastes the other two.
+A true Iron Man HUD uses every display — each screen has a distinct purpose and personality.
+
+### Proposed Screen Layout
+
+```
+┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐
+│   SCREEN 1       │  │   SCREEN 2       │  │   SCREEN 3       │
+│   PRIMARY HUD    │  │   CONTROL PANEL  │  │   INTEL / DATA   │
+│                  │  │                  │  │                  │
+│  Voice orb       │  │  Home map        │  │  Calendar today  │
+│  State / mood    │  │  Live sensors    │  │  Unread emails   │
+│  Comms log       │  │  Light controls  │  │  Download queue  │
+│  System stats    │  │  AC / climate    │  │  Plex streams    │
+│  Token usage     │  │  Who is home     │  │  News headlines  │
+│                  │  │  Agent activity  │  │  Finance summary │
+└──────────────────┘  └──────────────────┘  └──────────────────┘
+       8765                  8766 (new)             8767 (new)
+```
+
+### Implementation Plan
+
+**Electron multi-window** (`electron/main.js`):
+- Use `electron.screen.getAllDisplays()` to detect all connected monitors
+- Open a `BrowserWindow` on each display, fullscreen, no frame
+- Each window loads a different route from the same FastAPI server:
+  - `http://localhost:8765/` → Screen 1 (primary HUD — existing)
+  - `http://localhost:8765/panel` → Screen 2 (home control panel)
+  - `http://localhost:8765/intel` → Screen 3 (data / intel dashboard)
+
+**FastAPI routes** (`ui/server.py`):
+- `/panel` → serves `panel.html` (home control panel)
+- `/intel` → serves `intel.html` (data dashboard)
+- All three share the same WebSocket `/ws` — same event bus, different rendering
+
+**Screen 2 — Home Control Panel** (`ui/static/panel.html`):
+- Live floor plan or room grid (SVG-based, updates from HA state)
+- Each room shows: lights on/off, AC temp, motion detected, energy usage
+- Clickable controls (pointer-events enabled here unlike main HUD)
+- Real-time sensor values: temperature, humidity, door sensors
+- Presence indicators: who is in which room
+- Agent activity log: what tools were called recently
+
+**Screen 3 — Intel Dashboard** (`ui/static/intel.html`):
+- **Calendar strip**: today's meetings with countdown timers
+- **Email panel**: last 5 unread emails, flagged items
+- **Download queue**: Radarr + Sonarr + qBit combined, with progress bars
+- **Plex now playing**: active streams with artwork
+- **System health**: GPU/CPU/RAM gauges (larger, more detailed than main HUD)
+- **Weather**: current + 24h forecast
+- **Finance widget** (future): daily spend summary
+
+### Fallback Behaviour
+- If only 1 monitor detected → fullscreen on primary, other UIs accessible via keyboard shortcut
+- If 2 monitors → Screen 1 on primary, Screen 3 (intel) on secondary
+- If 3 monitors → full layout above
+
+### Wake Word Focus
+Currently wake word calls `localhost:8766/focus` to bring main window forward.
+Extension: broadcast focus event to all windows simultaneously — all three screens
+animate their borders to show Jarvis is listening.
+
+---
+
+## PILLAR 8 — MIGRATE LOCAL LLM TO NEMOTRON
+
+### Why Nemotron over Llama 3.1 8B
+
+| Property | Llama 3.1 8B | Nemotron Mini 4B |
+|---|---|---|
+| Parameters | 8B | 4B |
+| VRAM (4-bit) | ~5GB | ~2.5GB |
+| Speed (tokens/sec on 4070S) | ~35 t/s | ~70 t/s |
+| Context window | 128K | 4K |
+| Training focus | General | Chat + tool-use + roleplay |
+| NVIDIA optimisation | None | CUDA kernels, TensorRT-ready |
+| Persona adherence | Average | Strong (built for assistant personas) |
+
+**Model:** `nvidia/Nemotron-Mini-4B-Instruct`
+- Fits comfortably in 12GB VRAM alongside XTTS v2 (~2GB) with headroom
+- Optimised for conversational AI — better at staying in character as JARVIS
+- Faster inference = lower latency on simple replies
+- HuggingFace: `nvidia/Nemotron-Mini-4B-Instruct`
+
+### Migration Plan
+
+**Step 1 — Update `local_llm_service/service.py`:**
+```python
+MODEL_ID = "nvidia/Nemotron-Mini-4B-Instruct"
+# BitsAndBytesConfig stays the same (4-bit NF4)
+# No other code changes needed — same HuggingFace API
+```
+
+**Step 2 — Update system prompt in service.py:**
+Nemotron is persona-aware — lean into it:
+```python
+SYSTEM_PROMPT = (
+    "You are JARVIS, the AI assistant from Iron Man. "
+    "You are sophisticated, witty, efficient. Speak in plain sentences — "
+    "no markdown. Address the user as sir. Be concise."
+)
+```
+
+**Step 3 — Tune generation parameters:**
+Nemotron is a smaller model — tighter sampling helps quality:
+```python
+temperature=0.6,   # was 0.7
+top_p=0.85,        # was 0.9
+max_new_tokens=192 # was 256 — Nemotron is more concise
+```
+
+**Step 4 — Evaluate before committing:**
+- Run 20 test prompts against both models
+- Compare: response quality, character adherence, latency
+- Keep the winner; old model stays cached on disk
+
+### Future: Nemotron + TensorRT-LLM
+Once confirmed working, NVIDIA's TensorRT-LLM can quantize and optimize
+Nemotron further — potentially reaching 120+ tokens/sec on the 4070 Super.
+This would make local responses feel near-instant (under 1 second for most replies).
+
+### VRAM Budget with Full Stack
+
+| Component | VRAM |
+|---|---|
+| Nemotron Mini 4B (4-bit) | ~2.5 GB |
+| XTTS v2 | ~2.0 GB |
+| System overhead | ~0.5 GB |
+| **Total** | **~5.0 GB** |
+| **Available (4070 Super)** | **12 GB** |
+| **Headroom** | **~7 GB** |
+
+This leaves room for a future vision model or larger upgrade.
+
+---
+
 ## BUILD SEQUENCE (Suggested Order)
 
 ### Phase 1 — Foundation (V0.1.x)
-- [ ] Agent Bus (`core/agent_bus.py`)
-- [ ] Tier 2 routing (local Llama + single agent call)
-- [ ] Smart Home expansion to 14 actions
-- [ ] Outlook expansion to 14 actions
-- [ ] System Agent (10 actions)
-- [ ] Merge Radarr + Sonarr into Media Agent
+- [ ] **Migrate local LLM to Nemotron Mini 4B** (Pillar 8)
+- [ ] Agent Bus (`core/agent_bus.py`) (Pillar 2)
+- [ ] Tier 2 routing (local Nemotron + single agent call) (Pillar 3)
+- [ ] Smart Home expansion to 14 actions (Pillar 1)
+- [ ] Outlook expansion to 14 actions (Pillar 1)
+- [ ] System Agent (10 actions) (Pillar 1)
+- [ ] Merge Radarr + Sonarr into Media Agent (Pillar 1)
 
 ### Phase 2 — Intelligence (V0.2.x)
-- [ ] Memory Agent + SQLite persistence
-- [ ] Memory injection into system prompt
-- [ ] Proactive calendar and email monitors
-- [ ] Plex expansion + playback control
-- [ ] Finance Agent (if API source decided)
+- [ ] **Three-screen Electron layout** — Screen 2 Home Panel (Pillar 7)
+- [ ] **Three-screen Electron layout** — Screen 3 Intel Dashboard (Pillar 7)
+- [ ] Memory Agent + SQLite persistence (Pillar 5)
+- [ ] Memory injection into system prompt (Pillar 5)
+- [ ] Proactive calendar and email monitors (Pillar 4)
+- [ ] Plex expansion + playback control (Pillar 1)
+- [ ] Finance Agent (if API source decided) (Pillar 1)
 
 ### Phase 3 — Autonomy (V0.3.x)
-- [ ] Agent-to-agent subscriptions (event-driven)
-- [ ] Task Planner (plan display in UI)
-- [ ] Web Agent
-- [ ] Home arrival/departure automation chains
-- [ ] Doorbell/sensor trigger pipeline
+- [ ] Agent-to-agent subscriptions (event-driven) (Pillar 2)
+- [ ] Task Planner (plan display in UI) (Pillar 6)
+- [ ] Web Agent (Pillar 1)
+- [ ] Home arrival/departure automation chains (Pillar 4)
+- [ ] Doorbell/sensor trigger pipeline (Pillar 4)
+- [ ] TensorRT-LLM optimisation for Nemotron (Pillar 8)
 
 ### Phase 4 — Polish (V1.0)
-- [ ] User approval flow for multi-step plans
-- [ ] Full demo mode with all agents active
-- [ ] Performance dashboard in UI
+- [ ] User approval flow for multi-step plans (Pillar 6)
+- [ ] Full demo mode with all agents and all three screens active
 - [ ] Self-improvement: Jarvis logs failed queries and suggests new patterns
 
 ---
@@ -373,8 +515,28 @@ User can approve or skip steps (future enhancement).
 4. **Proactive speaking** — Should Jarvis speak proactively when no one is in the room, or only via notification badge?
 5. **Agent bus persistence** — Should agent events be logged to disk for replay/audit?
 6. **Voice for proactive alerts** — Different TTS voice/tone for alerts vs responses?
+7. **Screen 2 interaction** — Should the home control panel be fully clickable (mouse control of lights, AC, etc.) or voice-only like the main screen?
+8. **Screen 3 refresh rate** — Email/calendar panels: pull on demand vs auto-refresh every N minutes?
+9. **Nemotron evaluation** — Run side-by-side test before committing to migration, or migrate directly?
+10. **TensorRT-LLM** — Pursue after Nemotron is stable, or skip and wait for a future GPU upgrade?
 
 ---
 
-*Document created: 2026-06-15*
+## PILLAR SUMMARY
+
+| # | Pillar | Status | Target Phase |
+|---|---|---|---|
+| 1 | Expanded Agents (10+ actions each) | Planned | V0.1.x |
+| 2 | Agent-to-Agent Communication (bus) | Planned | V0.1.x |
+| 3 | Hybrid LLM within Agents (3-tier) | Planned | V0.1.x |
+| 4 | Proactive Jarvis (background monitors) | Planned | V0.2.x |
+| 5 | Persistent Memory (SQLite) | Planned | V0.2.x |
+| 6 | Natural Multi-Step Planning | Planned | V0.3.x |
+| 7 | Three-Screen Command Centre | Planned | V0.2.x |
+| 8 | Migrate to Nemotron Mini 4B | Planned | V0.1.x |
+
+---
+
+*Document created: 2026-06-16*
+*Last updated: 2026-06-16 — added Pillars 7 (multi-screen) and 8 (Nemotron)*
 *Next review: when returning from break*

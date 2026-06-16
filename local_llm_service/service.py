@@ -1,5 +1,5 @@
 """
-Local LLM service — Llama 3.1 8B Instruct (4-bit, GPU)
+Local LLM service — NVIDIA Nemotron Mini 4B Instruct (4-bit, GPU)
 Start:  venv\Scripts\python service.py
 Port:   http://localhost:8001
 """
@@ -10,13 +10,14 @@ from pydantic import BaseModel
 from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
 import uvicorn
 
-MODEL_ID = "meta-llama/Meta-Llama-3.1-8B-Instruct"
+MODEL_ID = "nvidia/Nemotron-Mini-4B-Instruct"
 HF_TOKEN = os.getenv("HF_TOKEN")
 DEVICE   = "cuda" if torch.cuda.is_available() else "cpu"
 
 SYSTEM_PROMPT = (
-    "You are JARVIS, a sophisticated AI assistant. "
-    "Be concise. Speak in plain sentences — no markdown, no asterisks, no bullet points. "
+    "You are JARVIS (Just A Rather Very Intelligent System), the AI assistant from Iron Man. "
+    "You are sophisticated, witty, and highly capable. Speak with refined British formality — "
+    "efficient yet personable. Be concise. No markdown, no bullet points, no asterisks. "
     "Address the user as sir."
 )
 
@@ -49,7 +50,7 @@ def load_model():
 class ChatRequest(BaseModel):
     message: str
     history: list[dict] = []
-    max_new_tokens: int = 256
+    max_new_tokens: int = 192
 
 
 @app.post("/chat")
@@ -67,8 +68,9 @@ def chat(req: ChatRequest):
             input_ids,
             max_new_tokens=req.max_new_tokens,
             do_sample=True,
-            temperature=0.7,
-            top_p=0.9,
+            temperature=0.6,
+            top_p=0.85,
+            repetition_penalty=1.1,
             pad_token_id=tokenizer.eos_token_id,
         )
 

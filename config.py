@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Version — increment patch on every feature/fix, minor on stable milestone, major on full release
-VERSION = "V0.0.103"
+VERSION = "V0.0.106"
 
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
 ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY")

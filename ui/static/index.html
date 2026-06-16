@@ -183,7 +183,7 @@ canvas{position:absolute;top:0;left:0;}
     </div>
     <div class="srow"><span class="slabel">AI CORE</span><span class="sval c" id="si-ai-core">CLAUDE SONNET</span></div>
     <div class="srow"><span class="slabel">VOICE ENGINE</span><span class="sval g" id="si-tts">EDGE TTS</span></div>
-    <div class="srow"><span class="slabel">LOCAL LLM</span><span class="sval c" id="si-llm">LLAMA 3.1 8B</span></div>
+    <div class="srow"><span class="slabel">LOCAL LLM</span><span class="sval c" id="si-llm">NEMOTRON 4B</span></div>
     <div class="srow"><span class="slabel">STT MODEL</span><span class="sval c">WHISPER BASE</span></div>
     <div class="srow"><span class="slabel">WAKE WORD</span><span class="sval g">HEY JARVIS</span></div>
 
@@ -330,13 +330,14 @@ function updateSysinfo(d){
 
 // agents — populated from backend via WS
 const FRIENDLY = {
-  get_briefing: 'BRIEFING',
-  smart_home:   'SMART HOME',
-  qbittorrent:  'QBITTORRENT',
-  movie_manager:'MOVIE MANAGER',
-  tv_manager:   'TV MANAGER',
-  plex_manager:     'PLEX',
-  outlook_manager:  'OUTLOOK',
+  get_briefing:   'BRIEFING',
+  smart_home:     'SMART HOME',
+  qbittorrent:    'QBITTORRENT',
+  movie_manager:  'MOVIE MANAGER',
+  tv_manager:     'TV MANAGER',
+  plex_manager:   'PLEX',
+  outlook_manager:'OUTLOOK',
+  system_agent:   'SYSTEM',
 };
 
 function renderAgents(tools){
