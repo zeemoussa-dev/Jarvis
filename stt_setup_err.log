@@ -1,0 +1,17 @@
+WARNING: There was an error checking the latest version of pip.
+  DEPRECATION: wget is being installed using the legacy 'setup.py install' method, because it does not have a 'pyproject.toml' and the 'wheel' package is not installed. pip 23.1 will enforce this behaviour change. A possible replacement is to enable the '--use-pep517' option. Discussion can be found at https://github.com/pypa/pip/issues/8559
+  DEPRECATION: antlr4-python3-runtime is being installed using the legacy 'setup.py install' method, because it does not have a 'pyproject.toml' and the 'wheel' package is not installed. pip 23.1 will enforce this behaviour change. A possible replacement is to enable the '--use-pep517' option. Discussion can be found at https://github.com/pypa/pip/issues/8559
+  DEPRECATION: sox is being installed using the legacy 'setup.py install' method, because it does not have a 'pyproject.toml' and the 'wheel' package is not installed. pip 23.1 will enforce this behaviour change. A possible replacement is to enable the '--use-pep517' option. Discussion can be found at https://github.com/pypa/pip/issues/8559
+  DEPRECATION: kaldi-python-io is being installed using the legacy 'setup.py install' method, because it does not have a 'pyproject.toml' and the 'wheel' package is not installed. pip 23.1 will enforce this behaviour change. A possible replacement is to enable the '--use-pep517' option. Discussion can be found at https://github.com/pypa/pip/issues/8559
+
+[notice] A new release of pip available: 22.3 -> 26.1.2
+[notice] To update, run: E:\MyWorx\Jarvis\stt_service\venv\Scripts\python.exe -m pip install --upgrade pip
+ERROR: pip's dependency resolver does not currently take into account all the packages that are installed. This behaviour is the source of the following dependency conflicts.
+pyannote-core 6.0.1 requires numpy>=2.0, but you have numpy 1.26.4 which is incompatible.
+pyannote-metrics 4.1 requires numpy>=2.2.2, but you have numpy 1.26.4 which is incompatible.
+
+[notice] A new release of pip available: 22.3 -> 26.1.2
+[notice] To update, run: E:\MyWorx\Jarvis\stt_service\venv\Scripts\python.exe -m pip install --upgrade pip
+
+[notice] A new release of pip available: 22.3 -> 26.1.2
+[notice] To update, run: E:\MyWorx\Jarvis\stt_service\venv\Scripts\python.exe -m pip install --upgrade pip

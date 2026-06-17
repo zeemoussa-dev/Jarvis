@@ -55,9 +55,12 @@ async def websocket_endpoint(websocket: WebSocket):
         "cloud_out": jarvis_state._tokens_cloud_out,
     }))
     from core.tts import _xtts_available
+    from core.stt import _parakeet_available, _parakeet_checked
     await websocket.send_text(json.dumps({
         "type": "sysinfo",
         "tts_engine": "XTTS V2" if _xtts_available else "EDGE TTS",
+        "stt_engine": ("PARAKEET TDT 1.1B (GPU)" if _parakeet_available
+                       else ("WHISPER BASE.EN" if _parakeet_checked else "CHECKING...")),
         "ai_core": "CLAUDE SONNET",
         "version": config.VERSION,
     }))

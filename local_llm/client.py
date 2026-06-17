@@ -6,7 +6,7 @@ Falls back gracefully if the service is not running.
 import httpx
 
 LOCAL_LLM_URL = "http://localhost:8001"
-_TIMEOUT = 60
+_TIMEOUT = 15  # fast-fail: if local LLM doesn't respond in 15s, fall back to Claude
 
 
 def is_available() -> bool:

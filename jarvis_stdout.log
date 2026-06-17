@@ -1,0 +1,18 @@
+[Jarvis] XTTS service already running.
+[Jarvis] Parakeet STT service already running.
+[Jarvis] Electron app launched.
+
+[Jarvis] Focus server port 8766 already in use â€” skipping.
+[Jarvis] XTTS service ready.
+[Jarvis] Parakeet STT service ready.
+[STT] Using PARAKEET TDT 1.1B (GPU)
+[JARVIS] JARVIS online. All systems nominal. How may I assist you, sir?
+[TTS] XTTS service online
+[Jarvis] Listening for wake word...
+[Jarvis] Wake word detected (score=0.94)
+[Jarvis] Recording command...
+[STT] Parakeet error: Server error '500 Internal Server Error' for url 'http://localhost:8003/transcribe'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500 — falling back to Whisper
+[STT] Loading Whisper 'base.en'...
+[User] Tell me about my day
+[Router] Local LLM not detected — using Claude for all requests.

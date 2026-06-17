@@ -184,7 +184,7 @@ canvas{position:absolute;top:0;left:0;}
     <div class="srow"><span class="slabel">AI CORE</span><span class="sval c" id="si-ai-core">CLAUDE SONNET</span></div>
     <div class="srow"><span class="slabel">VOICE ENGINE</span><span class="sval g" id="si-tts">EDGE TTS</span></div>
     <div class="srow"><span class="slabel">LOCAL LLM</span><span class="sval c" id="si-llm">NEMOTRON 4B</span></div>
-    <div class="srow"><span class="slabel">STT MODEL</span><span class="sval c">WHISPER BASE</span></div>
+    <div class="srow"><span class="slabel">STT ENGINE</span><span class="sval c" id="si-stt">WHISPER BASE.EN</span></div>
     <div class="srow"><span class="slabel">WAKE WORD</span><span class="sval g">HEY JARVIS</span></div>
 
     <div class="hline"></div>
@@ -322,6 +322,14 @@ function updateSysinfo(d){
     const bot=document.getElementById('bot-tts');
     if(bot)bot.textContent=d.tts_engine;
   }
+  if(d.stt_engine){
+    const el=document.getElementById('si-stt');
+    if(el){
+      el.textContent=d.stt_engine;
+      el.className='sval '+(d.stt_engine.startsWith('PARAKEET')?'g':'y');
+    }
+  }
+
   if(d.version){
     const el=document.getElementById('bot-version');
     if(el)el.textContent=d.version;

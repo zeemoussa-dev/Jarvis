@@ -1,10 +1,11 @@
 """
-Local LLM service — NVIDIA Nemotron Mini 4B Instruct (4-bit, GPU)
-Start:  venv\Scripts\python service.py
+Local LLM service — NVIDIA Nemotron Mini 4B Instruct (4-bit NF4, GPU)
+Start:  start.bat
 Port:   http://localhost:8001
 """
 
-import os, torch
+import os
+import torch
 from fastapi import FastAPI
 from pydantic import BaseModel
 from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
@@ -29,7 +30,7 @@ model     = None
 @app.on_event("startup")
 def load_model():
     global tokenizer, model
-    print(f"[LocalLLM] Loading {MODEL_ID} in 4-bit on {DEVICE}...")
+    print(f"[LocalLLM] Loading {MODEL_ID} in 4-bit NF4 on {DEVICE}...")
     bnb = BitsAndBytesConfig(
         load_in_4bit=True,
         bnb_4bit_use_double_quant=True,
@@ -38,10 +39,7 @@ def load_model():
     )
     tokenizer = AutoTokenizer.from_pretrained(MODEL_ID, token=HF_TOKEN)
     model = AutoModelForCausalLM.from_pretrained(
-        MODEL_ID,
-        token=HF_TOKEN,
-        quantization_config=bnb,
-        device_map="auto",
+        MODEL_ID, token=HF_TOKEN, quantization_config=bnb, device_map="auto",
     )
     model.eval()
     print("[LocalLLM] Model ready.")
@@ -75,13 +73,12 @@ def chat(req: ChatRequest):
         )
 
     new_tokens = out[0][input_ids.shape[-1]:]
-    response   = tokenizer.decode(new_tokens, skip_special_tokens=True).strip()
-    return {"response": response}
+    return {"response": tokenizer.decode(new_tokens, skip_special_tokens=True).strip()}
 
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "model": MODEL_ID, "device": DEVICE}
+    return {"status": "ok", "model": MODEL_ID, "device": DEVICE, "backend": "transformers"}
 
 
 if __name__ == "__main__":

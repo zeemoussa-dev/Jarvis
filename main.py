@@ -26,6 +26,10 @@ TTS_SERVICE_DIR = os.path.join(os.path.dirname(__file__), "tts_service")
 TTS_HEALTH_URL = "http://localhost:8002/health"
 TTS_STARTUP_TIMEOUT = 60  # seconds to wait for XTTS model to load
 
+STT_SERVICE_DIR = os.path.join(os.path.dirname(__file__), "stt_service")
+STT_HEALTH_URL = "http://localhost:8003/health"
+STT_STARTUP_TIMEOUT = 90  # NeMo model load takes longer
+
 BOOT_MESSAGE = (
     "JARVIS online. All systems nominal. How may I assist you, sir?"
 )
@@ -48,6 +52,42 @@ def _launch_xtts() -> None:
     )
 
 
+def _launch_stt() -> bool:
+    """Launch the Parakeet STT service. Returns True if launch was attempted."""
+    try:
+        urllib.request.urlopen(STT_HEALTH_URL, timeout=2)
+        print("[Jarvis] Parakeet STT service already running.")
+        return True
+    except Exception:
+        pass
+    bat = os.path.join(STT_SERVICE_DIR, "start.bat")
+    if not os.path.exists(os.path.join(STT_SERVICE_DIR, "venv")):
+        print("[Jarvis] Parakeet STT venv not found — run stt_service\\setup.bat first. Using Whisper fallback.")
+        return False
+    print("[Jarvis] Starting Parakeet STT service...")
+    subprocess.Popen(
+        ["cmd.exe", "/c", bat],
+        cwd=STT_SERVICE_DIR,
+        creationflags=subprocess.CREATE_NEW_CONSOLE,
+    )
+    return True
+
+
+def _wait_for_stt() -> None:
+    """Wait for Parakeet to be ready, then reset the STT check flag."""
+    from core.stt import reset_parakeet_check
+    deadline = time.time() + STT_STARTUP_TIMEOUT
+    while time.time() < deadline:
+        try:
+            urllib.request.urlopen(STT_HEALTH_URL, timeout=2)
+            print("[Jarvis] Parakeet STT service ready.")
+            reset_parakeet_check()
+            return
+        except Exception:
+            time.sleep(3)
+    print("[Jarvis] Parakeet STT did not respond — using Whisper fallback.")
+
+
 def _wait_for_xtts() -> None:
     """Block until XTTS is ready (up to TTS_STARTUP_TIMEOUT seconds), then reset the TTS check flag."""
     from core.tts import reset_xtts_check
@@ -64,8 +104,9 @@ def _wait_for_xtts() -> None:
 
 
 def main() -> None:
-    _launch_xtts()   # fire-and-forget: opens the console, doesn't block
-    start_ui()       # UI is live immediately
+    _launch_xtts()              # fire-and-forget: opens the console, doesn't block
+    _stt_launched = _launch_stt()  # fire-and-forget: opens the console, doesn't block
+    start_ui()                  # UI is live immediately
 
     orchestrator = Orchestrator()
     detector = WakeWordDetector()
@@ -80,7 +121,11 @@ def main() -> None:
     except Exception as e:
         print(f"[Jarvis] Could not launch Electron app: {e}")
 
-    _wait_for_xtts()  # wait here so the boot message uses the correct voice
+    _wait_for_xtts()                  # wait here so the boot message uses the correct voice
+    if _stt_launched:
+        _wait_for_stt()               # only wait if we actually started the service
+        from core.stt import _check_parakeet
+        _check_parakeet()             # set flag now so UI shows correct engine on connect
     set_state(JarvisState.SPEAKING)
     speak(BOOT_MESSAGE)
     time.sleep(POST_SPEAK_DELAY)

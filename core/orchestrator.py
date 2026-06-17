@@ -1,10 +1,12 @@
 from anthropic import Anthropic
 from datetime import datetime, timezone, timedelta
+import time
 
 import config
 from agents import AGENT_TOOLS, dispatch_tool
 from core.router import needs_cloud
 from core.state import add_local_tokens, add_cloud_tokens
+from core.guardrails import check_input, enforce_output
 from local_llm import client as local_llm
 
 _DUBAI = timezone(timedelta(hours=4))
@@ -38,18 +40,32 @@ class Orchestrator:
             self._local_available = local_llm.is_available()
             if self._local_available:
                 print("[Router] Local LLM is online.")
+                try:
+                    import httpx
+                    r = httpx.get("http://localhost:8001/health", timeout=3)
+                    backend = r.json().get("backend", "transformers")
+                    from core.state import _emit
+                    _emit({"type": "sysinfo", "llm_backend": backend})
+                except Exception:
+                    pass
             else:
                 print("[Router] Local LLM not detected — using Claude for all requests.")
         return self._local_available
 
     def process(self, user_input: str) -> str:
         """Route to local LLM or Claude, handle tool calls, return final text."""
+        # ── Guardrails input check ────────────────────────────────────────────
+        blocked = check_input(user_input)
+        if blocked:
+            return enforce_output(blocked)
+
         # ── Routing decision ──────────────────────────────────────────────────
+        _t0 = time.time()
         if self._use_local() and not needs_cloud(user_input):
             print("[Router] → Local LLM")
             add_cloud_tokens(0, 0)  # ensure sysinfo fires
             from core.state import _emit
-            _emit({"type": "sysinfo", "ai_core": "LOCAL LLAMA"})
+            _emit({"type": "sysinfo", "ai_core": "LOCAL NEMOTRON 4B"})
             # Build a plain history list for the local model
             plain_history = [
                 {"role": m["role"], "content": m["content"]}
@@ -58,16 +74,18 @@ class Orchestrator:
             ]
             try:
                 response = local_llm.chat(user_input, history=plain_history)
+                print(f"[Router] Local LLM responded in {time.time()-_t0:.1f}s — raw: {repr(response[:80])}")
                 add_local_tokens(len(user_input.split()) + len(response.split()))
                 self.history.append({"role": "user", "content": user_input})
                 self.history.append({"role": "assistant", "content": response})
                 self._trim_history()
-                return response
+                return enforce_output(response)
             except Exception as exc:
-                print(f"[Router] Local LLM error ({exc}), falling back to Claude.")
+                print(f"[Router] Local LLM error after {time.time()-_t0:.1f}s ({exc}), falling back to Claude.")
                 self._local_available = False  # stop trying local this session
 
         # ── Claude (cloud) path ───────────────────────────────────────────────
+        _t0 = time.time()
         print("[Router] → Claude (cloud)")
         from core.state import _emit
         _emit({"type": "sysinfo", "ai_core": "CLAUDE SONNET"})
@@ -97,7 +115,8 @@ class Orchestrator:
             self.history.append({"role": "assistant", "content": response.content})
 
             if response.stop_reason == "end_turn" or not tool_uses:
-                return " ".join(text_parts).strip()
+                print(f"[Router] Claude responded in {time.time()-_t0:.1f}s")
+                return enforce_output(" ".join(text_parts).strip())
 
             tool_results = []
             for tool_use in tool_uses:
@@ -113,8 +132,10 @@ class Orchestrator:
                     })
                     continue
 
+                _tt = time.time()
                 print(f"[Orchestrator] Calling tool: {tool_use.name}")
                 result = dispatch_tool(tool_use.name, tool_use.input)
+                print(f"[Orchestrator] Tool '{tool_use.name}' returned in {time.time()-_tt:.1f}s")
 
                 if str(result).startswith("[Error]"):
                     tool_retry_counts[tool_use.name] = retries + 1
