@@ -4,7 +4,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Version — increment patch on every feature/fix, minor on stable milestone, major on full release
-VERSION = "V0.0.112"
+VERSION = "V0.0.119"
+API_VERSION = 1  # Increment when mobile API contract changes (breaking changes only)
 
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
 ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY")
@@ -82,14 +83,28 @@ HA_PEOPLE = {
     "mahmoud": "device_tracker.moussa_fold_7",
     "me":      "device_tracker.moussa_fold_7",
     "wife":    "device_tracker.iphone_2",
-    "karma":   "device_tracker.iphone_2",
-    "mariam":  "device_tracker.iphone_2",
+    "alina":   "device_tracker.iphone_2",
 }
 
 # Default location for weather
 LOCATION_NAME = "Dubai"
 LOCATION_LAT  = 25.2048
 LOCATION_LON  = 55.2708
+
+# VPN SSH
+VPN_HOST = os.getenv("VPN_HOST", "10.0.0.1")
+VPN_USER = os.getenv("VPN_USER", "")
+VPN_PASS = os.getenv("VPN_PASS", "")
+VPN_SLOT = int(os.getenv("VPN_SLOT", "5"))
+
+# Synology NAS
+NAS_URL  = os.getenv("NAS_URL",  "")   # e.g. http://192.168.1.x:5000
+NAS_USER = os.getenv("NAS_USER", "")
+NAS_PASS = os.getenv("NAS_PASS", "")
+
+# WebSocket auth token — required for mobile app and external connections
+# Generate with: python -c "import secrets; print(secrets.token_urlsafe(32))"
+WS_TOKEN = os.getenv("WS_TOKEN", "")
 
 # ElevenLabs TTS
 TTS_MODEL = "eleven_turbo_v2"   # low latency model

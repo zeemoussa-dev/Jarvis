@@ -1,0 +1,46 @@
+name: jarvis_app
+description: JARVIS Mobile — voice control and home dashboard
+publish_to: none
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.2.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # WebSocket
+  web_socket_channel: ^2.4.0
+
+  # HTTP
+  http: ^1.2.0
+
+
+
+  # Network detection (local vs remote)
+  connectivity_plus: ^6.0.3
+  network_info_plus: ^6.0.1
+
+  # Persistent settings
+  shared_preferences: ^2.2.3
+
+  # Animations
+  flutter_animate: ^4.5.0
+
+  # Audio playback for TTS responses
+  audioplayers: ^6.1.0
+
+  # Push-to-talk using Android built-in speech recognition
+  speech_to_text: ^6.6.2
+  path_provider: ^2.1.4
+
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true

@@ -132,6 +132,14 @@ def _speak_edge(text: str) -> None:
         os.unlink(tmp_path)
 
 
+async def synthesize_bytes(text: str) -> bytes:
+    """Return raw MP3 bytes for the given text — used by the mobile API."""
+    text = _clean(text)
+    if not text:
+        return b""
+    return await _synthesize_edge(text)
+
+
 def speak(text: str) -> None:
     text = _clean(text)
     if not text:

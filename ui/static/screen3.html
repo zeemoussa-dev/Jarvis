@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>J.A.R.V.I.S. — HOME</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;overflow:hidden;}
+body{background:#030d12;font-family:'Rajdhani',monospace;color:#a0e8f0;display:flex;flex-direction:column;}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:linear-gradient(rgba(0,180,220,0.03) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,180,220,0.03) 1px,transparent 1px);
+  background-size:44px 44px;}
+#scanline{position:fixed;inset:0;z-index:2;pointer-events:none;
+  background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.03) 3px,rgba(0,0,0,0.03) 4px);}
+#scan-bar{position:fixed;left:0;width:100%;height:2px;z-index:3;pointer-events:none;
+  background:linear-gradient(90deg,transparent,rgba(0,212,255,0.18),transparent);
+  animation:scan 10s linear infinite;}
+@keyframes scan{0%{top:-2px;}100%{top:100vh;}}
+
+/* ── CHROME ── */
+#top-bar{
+  flex-shrink:0;height:50px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;
+  border-bottom:1px solid rgba(0,180,220,0.18);z-index:10;position:relative;
+  background:linear-gradient(180deg,rgba(1,10,16,0.98),rgba(1,10,16,0.65));}
+.logo{font-family:'Orbitron',monospace;font-size:14px;font-weight:900;letter-spacing:6px;color:#fff;text-shadow:0 0 18px rgba(0,212,255,0.5);}
+.logo em{color:#00d4ff;font-style:normal;}
+.screen-label{font-family:'Orbitron',monospace;font-size:9px;letter-spacing:5px;color:rgba(0,212,255,0.4);}
+#clock{font-family:'Orbitron',monospace;font-size:14px;color:#00d4ff;letter-spacing:3px;}
+
+#stats{
+  flex-shrink:0;height:38px;display:flex;align-items:stretch;z-index:9;position:relative;
+  background:rgba(0,5,10,0.95);border-bottom:1px solid rgba(0,180,220,0.1);}
+.sc{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;
+  border-right:1px solid rgba(0,180,220,0.08);}
+.sc:last-child{border-right:none;}
+.sc-l{font-family:'Orbitron',monospace;font-size:7px;letter-spacing:2px;color:rgba(160,232,240,0.3);}
+.sc-v{font-family:'Orbitron',monospace;font-size:15px;font-weight:700;line-height:1;}
+.cy{color:#00d4ff;text-shadow:0 0 8px rgba(0,212,255,0.35);}
+.gn{color:#3dd68c;text-shadow:0 0 8px rgba(61,214,140,0.3);}
+.am{color:#f59e0b;}
+.rd{color:#ef4444;}
+.dm{color:rgba(160,232,240,0.28);}
+.sc-dot{width:7px;height:7px;border-radius:50%;}
+.sc-dot.on{background:#3dd68c;box-shadow:0 0 7px #3dd68c;}
+.sc-dot.off{background:rgba(160,232,240,0.12);}
+
+/* ── MAIN GRID — fills remaining height ── */
+#layout{
+  flex:1;min-height:0;
+  display:grid;grid-template-columns:1fr 1fr 1fr;
+  gap:8px;padding:8px;overflow:hidden;z-index:1;position:relative;}
+
+/* Each column is a flex column that must fit its allocated height exactly */
+.col{display:flex;flex-direction:column;gap:8px;min-height:0;overflow:hidden;}
+
+/* ── CARD ── */
+.card{
+  display:flex;flex-direction:column;gap:8px;
+  background:rgba(0,14,22,0.9);border:1px solid rgba(0,180,220,0.13);
+  padding:11px;overflow:hidden;position:relative;min-height:0;}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(0,212,255,0.38),transparent);}
+/* flex:1 card grows to fill column space */
+.card.grow{flex:1;}
+/* flex-shrink:0 card takes only content height */
+.card.fixed{flex-shrink:0;}
+
+.ct{font-family:'Orbitron',monospace;font-size:8px;font-weight:700;letter-spacing:4px;
+  color:#00d4ff;display:flex;align-items:center;gap:7px;flex-shrink:0;
+  border-bottom:1px solid rgba(0,180,220,0.1);padding-bottom:7px;}
+.ct::before{content:'';width:5px;height:5px;border:1.5px solid #00d4ff;transform:rotate(45deg);flex-shrink:0;}
+.ct .badge{margin-left:auto;font-size:8px;color:rgba(0,212,255,0.36);font-weight:400;letter-spacing:1px;}
+.nd{font-size:10px;color:rgba(160,232,240,0.26);letter-spacing:1px;}
+
+/* ── WEATHER ── */
+.wx-body{flex:1;display:flex;flex-direction:column;justify-content:space-between;min-height:0;}
+.wx-top{display:flex;align-items:center;gap:16px;}
+.wx-icon{font-size:48px;line-height:1;filter:drop-shadow(0 0 12px rgba(0,212,255,0.35));}
+.wx-temp{font-family:'Orbitron',monospace;font-size:48px;font-weight:900;color:#fff;
+  text-shadow:0 0 20px rgba(0,212,255,0.3);line-height:1;}
+.wx-unit{font-family:'Orbitron',monospace;font-size:14px;color:rgba(0,212,255,0.6);vertical-align:super;}
+.wx-sub{display:flex;flex-direction:column;gap:2px;margin-top:4px;}
+.wx-feels{font-size:10px;color:rgba(160,232,240,0.45);letter-spacing:1px;}
+.wx-cond{font-family:'Orbitron',monospace;font-size:9px;letter-spacing:3px;color:rgba(0,212,255,0.55);}
+.wx-loc{font-family:'Orbitron',monospace;font-size:8px;letter-spacing:3px;color:rgba(0,212,255,0.35);}
+/* 6-cell stats grid */
+.wx-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;}
+.wx-cell{display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:7px 4px;background:rgba(0,212,255,0.03);border:1px solid rgba(0,180,220,0.1);}
+.wx-cell-icon{font-size:14px;}
+.wx-cell-val{font-family:'Orbitron',monospace;font-size:11px;font-weight:700;color:#00d4ff;}
+.wx-cell-lbl{font-size:7px;letter-spacing:1.5px;color:rgba(160,232,240,0.35);}
+/* Hourly forecast strip */
+.wx-forecast{display:flex;gap:5px;overflow:hidden;}
+.wx-hour{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:5px 2px;background:rgba(0,180,220,0.04);border:1px solid rgba(0,180,220,0.08);}
+.wx-hour-time{font-family:'Orbitron',monospace;font-size:7px;letter-spacing:1px;color:rgba(160,232,240,0.35);}
+.wx-hour-icon{font-size:13px;}
+.wx-hour-temp{font-family:'Orbitron',monospace;font-size:10px;font-weight:700;color:#00d4ff;}
+.wx-hour-precip{font-size:7px;color:rgba(100,160,255,0.55);}
+
+/* ── DYSON / AQI ── */
+.dyson-body{flex:1;display:flex;flex-direction:column;gap:7px;min-height:0;}
+.aqi-row{display:flex;align-items:center;gap:12px;flex-shrink:0;}
+.aqi-info{display:flex;flex-direction:column;gap:3px;}
+.aqi-rating{font-family:'Orbitron',monospace;font-size:11px;font-weight:700;letter-spacing:2px;}
+.aqi-sub{font-size:9px;color:rgba(160,232,240,0.38);letter-spacing:0.5px;}
+.dyson-metrics{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:6px;min-height:0;}
+.d-cell{display:flex;flex-direction:column;justify-content:center;gap:3px;
+  padding:8px 10px;background:rgba(0,212,255,0.03);border:1px solid rgba(0,180,220,0.1);}
+.d-val{font-family:'Orbitron',monospace;font-size:18px;font-weight:700;line-height:1;}
+.d-lbl{font-size:8px;letter-spacing:2px;color:rgba(160,232,240,0.38);}
+.d-unit{font-size:8px;color:rgba(160,232,240,0.3);}
+
+/* ── PEOPLE ── */
+.people-wrap{display:flex;gap:8px;flex:1;}
+.person-card{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:10px;padding:14px 8px 12px;border:1px solid rgba(0,180,220,0.12);
+  background:rgba(0,212,255,0.02);position:relative;overflow:hidden;}
+.person-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(0,212,255,0.3),transparent);}
+.p-avatar{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-family:'Orbitron',monospace;font-size:17px;font-weight:700;position:relative;}
+.p-avatar.home{background:rgba(61,214,140,0.1);border:2px solid #3dd68c;color:#3dd68c;box-shadow:0 0 14px rgba(61,214,140,0.2);}
+.p-avatar.home::before{content:'';position:absolute;inset:-6px;border-radius:50%;
+  border:1px solid rgba(61,214,140,0.16);animation:pulse-ring 2.4s ease infinite;}
+.p-avatar.away{background:rgba(160,232,240,0.03);border:2px solid rgba(160,232,240,0.1);color:rgba(160,232,240,0.22);}
+@keyframes pulse-ring{0%{transform:scale(1);opacity:0.45;}100%{transform:scale(1.6);opacity:0;}}
+.p-name{font-family:'Orbitron',monospace;font-size:9px;font-weight:700;letter-spacing:3px;color:rgba(160,232,240,0.8);}
+.p-badge{font-family:'Orbitron',monospace;font-size:7px;letter-spacing:3px;padding:2px 9px;border:1px solid;}
+.p-badge.home{color:#3dd68c;border-color:rgba(61,214,140,0.4);background:rgba(61,214,140,0.07);}
+.p-badge.away{color:rgba(160,232,240,0.22);border-color:rgba(160,232,240,0.1);}
+
+/* ── ACTIVITY CHART ── */
+.act-chart-wrap{flex:1;min-height:0;}
+#act-svg{width:100%;height:100%;}
+.act-gl{stroke:rgba(0,180,220,0.06);stroke-width:1;}
+.act-fill1{fill:url(#aGrad1);}.act-fill2{fill:url(#aGrad2);}
+.act-line1{fill:none;stroke:#00d4ff;stroke-width:1.5;filter:drop-shadow(0 0 3px #00d4ff88);}
+.act-line2{fill:none;stroke:#3dd68c;stroke-width:1.5;filter:drop-shadow(0 0 3px #3dd68c88);}
+.act-ax{font-family:'Orbitron',monospace;font-size:7px;fill:rgba(160,232,240,0.26);}
+.chart-legend{display:flex;gap:12px;flex-shrink:0;}
+.cl-item{display:flex;align-items:center;gap:5px;font-size:9px;color:rgba(160,232,240,0.42);}
+.cl-line{width:12px;height:2px;}
+
+/* ── EVENTS ── */
+.ev-scroll{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:3px;
+  scrollbar-width:thin;scrollbar-color:rgba(0,180,220,0.1) transparent;}
+.ev-row{display:flex;align-items:center;gap:6px;padding:4px 7px;font-size:9px;
+  border-left:2px solid;flex-shrink:0;}
+.ev-row.on{border-left-color:rgba(0,212,255,0.5);color:rgba(160,232,240,0.7);}
+.ev-row.off{border-left-color:rgba(160,232,240,0.1);color:rgba(160,232,240,0.35);}
+.ev-dot{width:4px;height:4px;border-radius:50%;flex-shrink:0;}
+.ev-dot.on{background:#00d4ff;box-shadow:0 0 4px #00d4ff;}
+.ev-dot.off{background:rgba(160,232,240,0.15);}
+.ev-name{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ev-s{font-family:'Orbitron',monospace;font-size:7px;letter-spacing:1px;}
+.ev-s.on{color:#00d4ff;}.ev-s.off{color:rgba(160,232,240,0.22);}
+.ev-t{font-size:7px;color:rgba(160,232,240,0.22);flex-shrink:0;}
+
+/* ── NAS ── */
+.nas-scroll{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:8px;
+  scrollbar-width:thin;scrollbar-color:rgba(0,180,220,0.1) transparent;}
+.nas-vol{flex-shrink:0;}
+.nas-vol-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;}
+.nas-vol-name{font-family:'Orbitron',monospace;font-size:8px;letter-spacing:2px;color:rgba(160,232,240,0.55);}
+.nas-vol-pct{font-family:'Orbitron',monospace;font-size:11px;font-weight:700;}
+.nas-track{height:9px;background:rgba(0,180,220,0.07);border-radius:4px;overflow:hidden;}
+.nas-fill{height:100%;border-radius:4px;transition:width 0.8s ease;}
+.nas-fill.ok{background:linear-gradient(90deg,#00d4ff,#0070e0);box-shadow:0 0 6px rgba(0,212,255,0.28);}
+.nas-fill.warn{background:linear-gradient(90deg,#f59e0b,#d97706);}
+.nas-fill.crit{background:linear-gradient(90deg,#ef4444,#dc2626);}
+.nas-size{display:flex;justify-content:space-between;margin-top:2px;
+  font-size:8px;color:rgba(160,232,240,0.3);}
+.nas-meta{display:grid;grid-template-columns:1fr 1fr;gap:5px;flex-shrink:0;}
+.nas-cell{display:flex;flex-direction:column;align-items:center;gap:2px;
+  padding:6px 4px;background:rgba(0,212,255,0.03);border:1px solid rgba(0,180,220,0.1);}
+.nas-cell-val{font-family:'Orbitron',monospace;font-size:13px;font-weight:700;color:#00d4ff;}
+.nas-cell-lbl{font-size:7px;letter-spacing:1.5px;color:rgba(160,232,240,0.32);}
+
+/* ── LIGHTS ── */
+.lights-scroll{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:4px;
+  scrollbar-width:thin;scrollbar-color:rgba(0,180,220,0.1) transparent;}
+.light-row{display:flex;align-items:center;gap:6px;padding:5px 7px;flex-shrink:0;
+  cursor:pointer;background:rgba(0,212,255,0.02);border:1px solid rgba(0,180,220,0.07);transition:all 0.2s;}
+.light-row:hover{background:rgba(0,212,255,0.06);}
+.l-icon{font-size:12px;flex-shrink:0;}
+.l-name{font-size:9px;color:rgba(160,232,240,0.6);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.l-pill{font-family:'Orbitron',monospace;font-size:7px;letter-spacing:1px;padding:2px 5px;border:1px solid;flex-shrink:0;}
+.l-pill.on{color:#00d4ff;border-color:rgba(0,212,255,0.35);}
+.l-pill.off{color:rgba(160,232,240,0.18);border-color:rgba(160,232,240,0.07);}
+
+/* ── SCENES ── */
+.scenes-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;}
+.sb{padding:8px 4px 7px;text-align:center;border:1px solid rgba(0,180,220,0.16);
+  background:rgba(0,212,255,0.03);cursor:pointer;transition:all 0.2s;
+  font-family:'Orbitron',monospace;font-size:7px;letter-spacing:1.5px;color:rgba(0,212,255,0.6);}
+.sb .si{font-size:14px;display:block;margin-bottom:3px;}
+.sb:hover{background:rgba(0,212,255,0.08);border-color:rgba(0,180,220,0.36);color:#00d4ff;}
+.sb.triggered{animation:sfx 0.5s ease;}
+@keyframes sfx{0%{background:rgba(0,212,255,0.22);}100%{background:rgba(0,212,255,0.03);}}
+
+/* corners */
+.bkt{position:fixed;width:18px;height:18px;border-color:rgba(0,180,220,0.24);border-style:solid;z-index:5;pointer-events:none;}
+.bkt.tl{top:88px;left:6px;border-width:2px 0 0 2px;}
+.bkt.tr{top:88px;right:6px;border-width:2px 2px 0 0;}
+.bkt.bl{bottom:0;left:6px;border-width:0 0 2px 2px;}
+.bkt.br{bottom:0;right:6px;border-width:0 2px 2px 0;}
+::-webkit-scrollbar{width:3px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:rgba(0,180,220,0.15);}
+</style>
+</head>
+<body>
+<div id="scanline"></div><div id="scan-bar"></div>
+<div class="bkt tl"></div><div class="bkt tr"></div>
+<div class="bkt bl"></div><div class="bkt br"></div>
+
+<!-- TOP BAR -->
+<div id="top-bar">
+  <div class="logo">J<em>.</em>A<em>.</em>R<em>.</em>V<em>.</em>I<em>.</em>S<em>.</em></div>
+  <div class="screen-label">HOME COMMAND CENTER</div>
+  <div id="clock">--:--:--</div>
+</div>
+
+<!-- STATS STRIP -->
+<div id="stats">
+  <div class="sc"><div class="sc-dot" id="ha-dot"></div><div class="sc-l">HA</div><div class="sc-v cy" id="s-ha">—</div></div>
+  <div class="sc"><div class="sc-l">OUTDOOR</div><div class="sc-v cy" id="s-temp">—</div><div class="sc-l">°C</div></div>
+  <div class="sc"><div class="sc-l">INDOOR</div><div class="sc-v am" id="s-indoor">—</div><div class="sc-l">°C</div></div>
+  <div class="sc"><div class="sc-l">HUMIDITY</div><div class="sc-v cy" id="s-hum">—</div><div class="sc-l">%</div></div>
+  <div class="sc"><div class="sc-l">AQI</div><div class="sc-v dm" id="s-aqi">—</div></div>
+  <div class="sc"><div class="sc-l">NAS</div><div class="sc-v dm" id="s-nas">—</div></div>
+</div>
+
+<!-- 3-COLUMN LAYOUT -->
+<div id="layout">
+
+  <!-- COL 1: WEATHER + DYSON AIR QUALITY -->
+  <div class="col">
+
+    <div class="card grow">
+      <div class="ct">OUTDOOR CONDITIONS <span class="badge" id="wx-badge">DUBAI</span></div>
+      <div class="wx-body">
+        <!-- Big temp + icon -->
+        <div class="wx-top">
+          <div class="wx-icon" id="wx-icon">☀️</div>
+          <div>
+            <div><span class="wx-temp" id="wx-temp">—</span><span class="wx-unit">°C</span></div>
+            <div class="wx-sub">
+              <div class="wx-feels" id="wx-feels">FEELS LIKE —°C</div>
+              <div class="wx-cond" id="wx-cond">—</div>
+              <div class="wx-loc" id="wx-loc">—</div>
+            </div>
+          </div>
+        </div>
+        <!-- 6-cell stats grid -->
+        <div class="wx-grid">
+          <div class="wx-cell">
+            <span class="wx-cell-icon">💧</span>
+            <span class="wx-cell-val" id="wx-hum">—</span>
+            <span class="wx-cell-lbl">HUMIDITY</span>
+          </div>
+          <div class="wx-cell">
+            <span class="wx-cell-icon">💨</span>
+            <span class="wx-cell-val" id="wx-wind">—</span>
+            <span class="wx-cell-lbl">WIND KM/H</span>
+          </div>
+          <div class="wx-cell">
+            <span class="wx-cell-icon">🌡️</span>
+            <span class="wx-cell-val" id="wx-press">—</span>
+            <span class="wx-cell-lbl">PRESSURE</span>
+          </div>
+          <div class="wx-cell">
+            <span class="wx-cell-icon">☀️</span>
+            <span class="wx-cell-val" id="wx-uv">—</span>
+            <span class="wx-cell-lbl">UV INDEX</span>
+          </div>
+          <div class="wx-cell">
+            <span class="wx-cell-icon">🌂</span>
+            <span class="wx-cell-val" id="wx-precip">—</span>
+            <span class="wx-cell-lbl">PRECIP MM</span>
+          </div>
+          <div class="wx-cell">
+            <span class="wx-cell-icon">👁️</span>
+            <span class="wx-cell-val" id="wx-vis">—</span>
+            <span class="wx-cell-lbl">VIS KM</span>
+          </div>
+        </div>
+        <!-- 6-hour forecast -->
+        <div class="wx-forecast" id="wx-forecast">
+          <div class="nd">LOADING FORECAST...</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card grow">
+      <div class="ct">AIR QUALITY — DYSON</div>
+      <div class="dyson-body">
+        <div class="aqi-row">
+          <svg width="68" height="68" viewBox="0 0 68 68" style="flex-shrink:0;">
+            <defs>
+              <linearGradient id="aqiG" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#3dd68c"/>
+                <stop offset="50%" stop-color="#f59e0b"/>
+                <stop offset="100%" stop-color="#ef4444"/>
+              </linearGradient>
+            </defs>
+            <circle cx="34" cy="34" r="28" fill="none" stroke="rgba(0,180,220,0.08)" stroke-width="8"/>
+            <circle id="aqi-arc" cx="34" cy="34" r="28" fill="none"
+              stroke="url(#aqiG)" stroke-width="8" stroke-linecap="round"
+              stroke-dasharray="0 175.9" stroke-dashoffset="44"
+              transform="rotate(-135 34 34)" style="transition:stroke-dasharray 1s ease;"/>
+            <text id="aqi-center" x="34" y="36" text-anchor="middle" dominant-baseline="middle"
+              style="font-family:'Orbitron',monospace;font-size:14px;font-weight:700;fill:#00d4ff;">—</text>
+          </svg>
+          <div class="aqi-info">
+            <div style="font-size:7px;letter-spacing:2px;color:rgba(160,232,240,0.32);">AIR QUALITY INDEX</div>
+            <div class="aqi-rating" id="aqi-rating" style="font-family:'Orbitron',monospace;font-size:11px;font-weight:700;letter-spacing:2px;">—</div>
+            <div class="aqi-sub" id="aqi-sub">AWAITING DATA</div>
+          </div>
+        </div>
+        <div class="dyson-metrics">
+          <div class="d-cell">
+            <div class="d-val cy" id="d-pm25">—</div>
+            <div class="d-lbl">PM 2.5</div>
+            <div class="d-unit">µg/m³</div>
+          </div>
+          <div class="d-cell">
+            <div class="d-val cy" id="d-pm10">—</div>
+            <div class="d-lbl">PM 10</div>
+            <div class="d-unit">µg/m³</div>
+          </div>
+          <div class="d-cell">
+            <div class="d-val am" id="d-voc">—</div>
+            <div class="d-lbl">VOC</div>
+            <div class="d-unit">INDEX</div>
+          </div>
+          <div class="d-cell">
+            <div class="d-val" id="d-hum">—</div>
+            <div class="d-lbl">INDOOR HUM</div>
+            <div class="d-unit">%</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- COL 2: PEOPLE + ACTIVITY CHART + EVENTS -->
+  <div class="col">
+
+    <div class="card fixed">
+      <div class="ct">PRESENCE</div>
+      <div class="people-wrap" id="people-grid">
+        <div class="nd">LOADING...</div>
+      </div>
+    </div>
+
+    <div class="card grow">
+      <div class="ct">ACTIVITY OVER TIME <span class="badge">5 MIN · LIVE</span></div>
+      <div class="act-chart-wrap">
+        <svg id="act-svg" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="aGrad1" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#00d4ff" stop-opacity="0.38"/>
+              <stop offset="100%" stop-color="#00d4ff" stop-opacity="0"/>
+            </linearGradient>
+            <linearGradient id="aGrad2" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#3dd68c" stop-opacity="0.25"/>
+              <stop offset="100%" stop-color="#3dd68c" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <g id="act-grid-g"></g>
+          <path id="af1" class="act-fill1" d=""/>
+          <path id="af2" class="act-fill2" d=""/>
+          <path id="al1" class="act-line1" d=""/>
+          <path id="al2" class="act-line2" d=""/>
+        </svg>
+      </div>
+      <div class="chart-legend">
+        <div class="cl-item"><div class="cl-line" style="background:#00d4ff;box-shadow:0 0 4px #00d4ff;"></div>Lights On</div>
+        <div class="cl-item"><div class="cl-line" style="background:#3dd68c;box-shadow:0 0 4px #3dd68c;"></div>People Home</div>
+      </div>
+    </div>
+
+    <div class="card" style="flex:0 0 auto;max-height:38%;">
+      <div class="ct">STATE CHANGES <span class="badge" id="ev-badge">0</span></div>
+      <div class="ev-scroll" id="events-list"><div class="nd">MONITORING...</div></div>
+    </div>
+
+  </div>
+
+  <!-- COL 3: NAS + LIGHTS + SCENES -->
+  <div class="col">
+
+    <div class="card grow">
+      <div class="ct">NAS — SYNOLOGY <span class="badge" id="nas-model-badge">—</span></div>
+      <div class="nas-scroll" id="nas-body"><div class="nd">CONNECTING...</div></div>
+      <div class="nas-meta" id="nas-meta"></div>
+    </div>
+
+    <div class="card grow">
+      <div class="ct">LIGHTING <span class="badge" id="lights-badge">0 ON</span></div>
+      <div class="lights-scroll" id="lights-list"><div class="nd">LOADING...</div></div>
+    </div>
+
+    <div class="card fixed">
+      <div class="ct">QUICK SCENES</div>
+      <div class="scenes-grid">
+        <button class="sb" onclick="runScene('scene.good_night',this)"><span class="si">🌙</span>GOOD NIGHT</button>
+        <button class="sb" onclick="runScene('scene.movie_mode',this)"><span class="si">🎬</span>MOVIE MODE</button>
+        <button class="sb" onclick="runScene('scene.morning',this)"><span class="si">☀️</span>MORNING</button>
+        <button class="sb" onclick="runScene('scene.away',this)"><span class="si">🔒</span>AWAY MODE</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ── Clock ──────────────────────────────────────────────────────────────────────
+function pad(n){return String(n).padStart(2,'0');}
+function tick(){const n=new Date();document.getElementById('clock').textContent=`${pad(n.getHours())}:${pad(n.getMinutes())}:${pad(n.getSeconds())}`;}
+setInterval(tick,1000);tick();
+
+// ── Weather code helpers ───────────────────────────────────────────────────────
+function wxInfo(code){
+  if(code===0)  return{icon:'☀️',label:'CLEAR SKY'};
+  if(code<=2)   return{icon:'🌤️',label:'PARTLY CLOUDY'};
+  if(code===3)  return{icon:'☁️',label:'OVERCAST'};
+  if(code<=48)  return{icon:'🌫️',label:'FOGGY'};
+  if(code<=57)  return{icon:'🌦️',label:'DRIZZLE'};
+  if(code<=67)  return{icon:'🌧️',label:'RAIN'};
+  if(code<=82)  return{icon:'🌦️',label:'SHOWERS'};
+  return{icon:'⛈️',label:'THUNDERSTORM'};
+}
+function uvClass(v){return v<=2?'gn':v<=5?'am':'rd';}
+
+// ── AQI helpers ────────────────────────────────────────────────────────────────
+function aqiInfo(v){
+  if(v==null)return{rating:'—',color:'#00d4ff',sub:'NO DATA',pct:0};
+  const isDyson=v<=10;
+  if(isDyson){
+    const pct=(v/5)*100;
+    const map=[[0,'VERY GOOD','#3dd68c'],[1,'GOOD','#3dd68c'],[2,'MODERATE','#f59e0b'],
+               [3,'POOR','#f59e0b'],[4,'VERY POOR','#ef4444'],[5,'EXTREMELY POOR','#ef4444']];
+    const [,rating,color]=map[Math.min(Math.round(v),5)]||[0,'—','#00d4ff'];
+    return{rating,color,sub:`DYSON SCALE ${v}/5`,pct};
+  }
+  const pct=Math.min(v/300*100,100);
+  let rating,color;
+  if(v<=50){rating='GOOD';color='#3dd68c';}
+  else if(v<=100){rating='MODERATE';color='#f59e0b';}
+  else if(v<=150){rating='UNHEALTHY SG';color='#f59e0b';}
+  else{rating='UNHEALTHY';color='#ef4444';}
+  return{rating,color,sub:`AQI ${Math.round(v)}`,pct};
+}
+
+// ── NAS helpers ────────────────────────────────────────────────────────────────
+function nasClass(p){return p>=90?'crit':p>=75?'warn':'ok';}
+function nasValClass(p){return p>=90?'rd':p>=75?'am':'cy';}
+function fmtUptime(s){const d=Math.floor(s/86400),h=Math.floor((s%86400)/3600);return d?`${d}D ${h}H`:`${h}H`;}
+
+// ── Light icon ─────────────────────────────────────────────────────────────────
+function licon(n){n=n.toLowerCase();
+  if(n.includes('bed'))return'🛏️';if(n.includes('kitchen'))return'🍳';
+  if(n.includes('living')||n.includes('lounge'))return'🛋️';if(n.includes('bath'))return'🚿';
+  if(n.includes('office')||n.includes('study'))return'💼';
+  if(n.includes('garden')||n.includes('outdoor'))return'🌿';if(n.includes('hall'))return'🚪';
+  if(n.includes('dining'))return'🍽️';return'💡';}
+
+// ── Scene / toggle ─────────────────────────────────────────────────────────────
+async function runScene(id,btn){
+  if(btn){btn.classList.add('triggered');setTimeout(()=>btn.classList.remove('triggered'),600);}
+  try{await fetch('/api/home/toggle',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({entity_id:id,action:'turn_on'})});setTimeout(fetchHome,1200);}
+  catch(e){console.error(e);}
+}
+async function toggleLight(eid){
+  try{await fetch('/api/home/toggle',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({entity_id:eid,action:'toggle'})});setTimeout(fetchHome,700);}
+  catch(e){console.error(e);}
+}
+
+// ── Area chart ─────────────────────────────────────────────────────────────────
+const HMAX=30;const hL=[];const hP=[];
+function buildPath(data,W,H,maxVal){
+  if(data.length<2)return{l:'',a:''};
+  const pts=data.map((v,i)=>[(i/(data.length-1))*W, H-(v/maxVal)*H*0.84-H*0.05]);
+  const l='M '+pts.map(p=>p.join(',')).join(' L ');
+  return{l,a:l+` L ${pts[pts.length-1][0]},${H} L 0,${H} Z`};
+}
+function drawChart(){
+  const wrap=document.getElementById('act-chart-wrap')||document.querySelector('.act-chart-wrap');
+  if(!wrap)return;
+  const W=wrap.clientWidth||400,H=wrap.clientHeight||120;
+  const svg=document.getElementById('act-svg');
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  const maxVal=Math.max(...hL,...hP,1);
+  const g=document.getElementById('act-grid-g');g.innerHTML='';
+  for(let i=0;i<=3;i++){
+    const y=H-(i/3)*H*0.84-H*0.05;
+    const l=document.createElementNS('http://www.w3.org/2000/svg','line');
+    l.setAttribute('x1','0');l.setAttribute('x2',W);l.setAttribute('y1',y);l.setAttribute('y2',y);
+    l.setAttribute('class','act-gl');g.appendChild(l);
+    const t=document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('x','3');t.setAttribute('y',y-3);t.setAttribute('class','act-ax');
+    t.textContent=Math.round(i/3*maxVal);g.appendChild(t);
+  }
+  if(hL.length>=2){const{l,a}=buildPath(hL,W,H,maxVal);document.getElementById('af1').setAttribute('d',a);document.getElementById('al1').setAttribute('d',l);}
+  if(hP.length>=2){const{l,a}=buildPath(hP,W,H,maxVal);document.getElementById('af2').setAttribute('d',a);document.getElementById('al2').setAttribute('d',l);}
+}
+
+// ── Activity log ───────────────────────────────────────────────────────────────
+const evLog=[];let prevSt={};
+function trackChanges(lights,switches){
+  const now=new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+  const cur={};[...lights,...switches].forEach(e=>cur[e.entity_id]=e.state);
+  for(const[id,st]of Object.entries(cur)){
+    if(id in prevSt&&prevSt[id]!==st){
+      const name=[...lights,...switches].find(e=>e.entity_id===id)?.name||id.split('.')[1];
+      evLog.unshift({name,state:st,time:now});if(evLog.length>16)evLog.pop();
+    }
+  }
+  prevSt=cur;
+}
+function renderEvents(){
+  document.getElementById('ev-badge').textContent=evLog.length;
+  const el=document.getElementById('events-list');
+  if(!evLog.length){el.innerHTML='<div class="nd">MONITORING...</div>';return;}
+  el.innerHTML=evLog.map(a=>`<div class="ev-row ${a.state==='on'?'on':'off'}">
+    <div class="ev-dot ${a.state==='on'?'on':'off'}"></div>
+    <span class="ev-name">${a.name}</span>
+    <span class="ev-s ${a.state==='on'?'on':'off'}">${a.state.toUpperCase()}</span>
+    <span class="ev-t">${a.time}</span>
+  </div>`).join('');
+}
+
+// ── Render weather ─────────────────────────────────────────────────────────────
+function renderWeather(w){
+  if(!w||w.error)return;
+  const{icon,label}=wxInfo(w.code);
+  document.getElementById('wx-icon').textContent=icon;
+  document.getElementById('wx-temp').textContent=w.temp!=null?Math.round(w.temp):'—';
+  document.getElementById('wx-feels').textContent=`FEELS LIKE ${w.feels_like!=null?Math.round(w.feels_like):'—'}°C`;
+  document.getElementById('wx-cond').textContent=label;
+  document.getElementById('wx-loc').textContent=w.location||'—';
+  document.getElementById('wx-badge').textContent=w.location||'—';
+  document.getElementById('wx-hum').textContent=w.humidity!=null?Math.round(w.humidity)+'%':'—';
+  document.getElementById('wx-wind').textContent=w.wind_kmh!=null?Math.round(w.wind_kmh):'—';
+  document.getElementById('wx-press').textContent=w.pressure!=null?Math.round(w.pressure):'—';
+  const uvEl=document.getElementById('wx-uv');
+  uvEl.textContent=w.uv!=null?w.uv.toFixed(1):'—';
+  if(w.uv!=null)uvEl.className='wx-cell-val '+uvClass(w.uv);
+  document.getElementById('wx-precip').textContent=w.precip!=null?w.precip.toFixed(1):'—';
+  document.getElementById('wx-vis').textContent=w.visibility!=null?(w.visibility/1000).toFixed(0):'—';
+  // Stats strip
+  if(w.temp!=null)document.getElementById('s-temp').textContent=Math.round(w.temp);
+  if(w.humidity!=null)document.getElementById('s-hum').textContent=Math.round(w.humidity);
+  // Hourly forecast
+  const fc=document.getElementById('wx-forecast');
+  if(w.forecast&&w.forecast.length){
+    fc.innerHTML=w.forecast.slice(0,6).map(h=>`<div class="wx-hour">
+      <div class="wx-hour-time">${h.hour}</div>
+      <div class="wx-hour-icon">${wxInfo(h.code).icon}</div>
+      <div class="wx-hour-temp">${h.temp!=null?Math.round(h.temp)+'°':'—'}</div>
+      <div class="wx-hour-precip">${h.precip}%</div>
+    </div>`).join('');
+  }
+}
+
+// ── Render Dyson ───────────────────────────────────────────────────────────────
+function renderDyson(d){
+  const fmt=v=>v!=null?v.toFixed(1):'—';
+  document.getElementById('d-pm25').textContent=fmt(d.pm25);
+  document.getElementById('d-pm10').textContent=fmt(d.pm10);
+  document.getElementById('d-voc').textContent=fmt(d.voc);
+  document.getElementById('d-hum').textContent=d.humidity!=null?Math.round(d.humidity):'—';
+  if(d.temp!=null)document.getElementById('s-indoor').textContent=d.temp.toFixed(1);
+  const{pct,rating,color,sub}=aqiInfo(d.aqi);
+  document.getElementById('aqi-center').textContent=d.aqi!=null?Math.round(d.aqi):'—';
+  document.getElementById('aqi-center').setAttribute('fill',color);
+  document.getElementById('aqi-rating').textContent=rating;
+  document.getElementById('aqi-rating').style.color=color;
+  document.getElementById('aqi-sub').textContent=sub;
+  // Arc: r=28, circ=175.9, 270° usable
+  const filled=(pct/100)*175.9*0.75;
+  document.getElementById('aqi-arc').setAttribute('stroke-dasharray',`${filled.toFixed(1)} 175.9`);
+  // Strip AQI
+  const aqiEl=document.getElementById('s-aqi');
+  aqiEl.textContent=d.aqi!=null?Math.round(d.aqi):'—';
+  aqiEl.className='sc-v '+(d.aqi!=null?(d.aqi<=2||d.aqi<=50?'gn':d.aqi<=3||d.aqi<=100?'am':'rd'):'dm');
+}
+
+// ── Render people ──────────────────────────────────────────────────────────────
+function renderPeople(people){
+  const el=document.getElementById('people-grid');
+  if(!people.length){el.innerHTML='<div class="nd">NO TRACKERS</div>';return;}
+  el.innerHTML=people.map(p=>{
+    const h=p.state==='home';
+    const ini=p.name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+    return`<div class="person-card">
+      <div class="p-avatar ${h?'home':'away'}">${ini}</div>
+      <div class="p-name">${p.name.toUpperCase()}</div>
+      <div class="p-badge ${h?'home':'away'}">${h?'HOME':'AWAY'}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── Render NAS ─────────────────────────────────────────────────────────────────
+function renderNas(nas){
+  if(!nas||nas.error){
+    document.getElementById('nas-body').innerHTML=`<div class="nd">${nas?.error||'ADD NAS_URL TO .ENV'}</div>`;
+    document.getElementById('s-nas').textContent='—';return;
+  }
+  document.getElementById('nas-model-badge').textContent=nas.model||'NAS';
+  const worst=nas.volumes?Math.max(...nas.volumes.map(v=>v.used_pct),0):0;
+  const nasEl=document.getElementById('s-nas');
+  nasEl.textContent=worst+'%';
+  nasEl.className='sc-v '+(worst>=90?'rd':worst>=75?'am':'gn');
+  document.getElementById('nas-body').innerHTML=(nas.volumes||[]).map(v=>`
+    <div class="nas-vol">
+      <div class="nas-vol-hdr">
+        <span class="nas-vol-name">${v.name}</span>
+        <span class="nas-vol-pct ${nasValClass(v.used_pct)}">${v.used_pct}%</span>
+      </div>
+      <div class="nas-track"><div class="nas-fill ${nasClass(v.used_pct)}" style="width:${v.used_pct}%"></div></div>
+      <div class="nas-size"><span>${v.used_gb} GB</span><span>${v.total_gb} GB TOTAL</span></div>
+    </div>`).join('');
+  document.getElementById('nas-meta').innerHTML=`
+    <div class="nas-cell"><div class="nas-cell-val cy">${nas.cpu_pct!=null?Math.round(nas.cpu_pct)+'%':'—'}</div><div class="nas-cell-lbl">CPU</div></div>
+    <div class="nas-cell"><div class="nas-cell-val cy">${nas.ram_pct!=null?Math.round(nas.ram_pct)+'%':'—'}</div><div class="nas-cell-lbl">RAM</div></div>
+    <div class="nas-cell"><div class="nas-cell-val am">${nas.temp!=null?nas.temp+'°C':'—'}</div><div class="nas-cell-lbl">TEMP</div></div>
+    <div class="nas-cell"><div class="nas-cell-val dm" style="font-size:11px;">${nas.uptime?fmtUptime(nas.uptime):'—'}</div><div class="nas-cell-lbl">UPTIME</div></div>`;
+}
+
+// ── Render lights ──────────────────────────────────────────────────────────────
+function renderLights(lights){
+  const onCount=lights.filter(l=>l.state==='on').length;
+  document.getElementById('lights-badge').textContent=`${onCount} ON`;
+  const el=document.getElementById('lights-list');
+  if(!lights.length){el.innerHTML='<div class="nd">NO LIGHTS</div>';return;}
+  el.innerHTML=[...lights].sort((a,b)=>a.state===b.state?0:a.state==='on'?-1:1)
+    .map(l=>`<div class="light-row" onclick="toggleLight('${l.entity_id}')">
+      <span class="l-icon">${licon(l.name)}</span>
+      <span class="l-name">${l.name}</span>
+      <span class="l-pill ${l.state==='on'?'on':'off'}">${l.state==='on'?'ON':'OFF'}</span>
+    </div>`).join('');
+}
+
+// ── Fetch environment (60s) ────────────────────────────────────────────────────
+async function fetchEnv(){
+  try{
+    const d=await(await fetch('/api/environment')).json();
+    if(d.weather)renderWeather(d.weather);
+    if(d.dyson)  renderDyson(d.dyson);
+    if(d.nas)    renderNas(d.nas);
+    if(d.people) renderPeople(d.people);
+  }catch(e){console.error('Env:',e);}
+}
+
+// ── Fetch home (10s) ──────────────────────────────────────────────────────────
+async function fetchHome(){
+  try{
+    const d=await(await fetch('/api/home')).json();
+    const lights=d.lights||[],switches=d.switches||[];
+    renderLights(lights);
+    hL.push(lights.filter(l=>l.state==='on').length);if(hL.length>HMAX)hL.shift();
+    hP.push((d.presence||[]).filter(p=>p.state==='home').length);if(hP.length>HMAX)hP.shift();
+    trackChanges(lights,switches);renderEvents();drawChart();
+    const ok=!d.error;
+    document.getElementById('s-ha').textContent=ok?'ONLINE':'OFFLINE';
+    document.getElementById('s-ha').className='sc-v '+(ok?'gn':'rd');
+    document.getElementById('ha-dot').className='sc-dot '+(ok?'on':'off');
+  }catch(e){console.error('Home:',e);}
+}
+
+fetchEnv();fetchHome();
+setInterval(fetchEnv,60000);setInterval(fetchHome,10000);
+window.addEventListener('resize',drawChart);
+</script>
+</body>
+</html>

@@ -6,9 +6,11 @@ Port:   http://localhost:8001
 
 import os
 import torch
+from threading import Thread
 from fastapi import FastAPI
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
+from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig, TextIteratorStreamer
 import uvicorn
 
 MODEL_ID = "nvidia/Nemotron-Mini-4B-Instruct"
@@ -74,6 +76,43 @@ def chat(req: ChatRequest):
 
     new_tokens = out[0][input_ids.shape[-1]:]
     return {"response": tokenizer.decode(new_tokens, skip_special_tokens=True).strip()}
+
+
+@app.post("/chat_stream")
+def chat_stream(req: ChatRequest):
+    messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+    messages.extend([m for m in req.history[-6:] if isinstance(m.get("content"), str)])
+    messages.append({"role": "user", "content": req.message})
+
+    input_ids = tokenizer.apply_chat_template(
+        messages, add_generation_prompt=True, return_tensors="pt"
+    ).to(model.device)
+
+    streamer = TextIteratorStreamer(tokenizer, skip_special_tokens=True, skip_prompt=True)
+
+    def _generate():
+        with torch.no_grad():
+            model.generate(
+                input_ids,
+                max_new_tokens=req.max_new_tokens,
+                do_sample=True,
+                temperature=0.6,
+                top_p=0.85,
+                repetition_penalty=1.1,
+                pad_token_id=tokenizer.eos_token_id,
+                streamer=streamer,
+            )
+
+    Thread(target=_generate, daemon=True).start()
+
+    def _sse():
+        for token in streamer:
+            if token:
+                escaped = token.replace("\n", "\\n")
+                yield f"data: {escaped}\n\n"
+        yield "data: [DONE]\n\n"
+
+    return StreamingResponse(_sse(), media_type="text/event-stream")
 
 
 @app.get("/health")

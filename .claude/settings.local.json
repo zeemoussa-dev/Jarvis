@@ -1,20 +1,30 @@
 {
   "permissions": {
     "allow": [
-      "mcp__Claude_Preview__preview_start",
-      "Bash(where python3 *)",
-      "Bash(where python *)",
-      "Bash(where py *)",
-      "Bash(py --version)",
-      "Bash(ls \"C:\\\\Users\\\\mahmo\\\\AppData\\\\Local\\\\Microsoft\\\\WindowsApps\\\\\" | grep -i python)",
+      "Bash(*)",
+      "PowerShell(*)",
+      "Read(*)",
+      "Write(*)",
+      "Edit(*)",
+      "Glob(*)",
+      "Grep(*)",
+      "WebSearch(*)",
+      "WebFetch(*)",
       "mcp__visualize__read_me",
       "mcp__visualize__show_widget",
-      "Bash(git --version)",
-      "Bash(gh --version)",
-      "PowerShell(gh --version)",
-      "Bash(pip install *)",
-      "PowerShell(python -m pip install -r E:\\\\MyWorx\\\\Jarvis\\\\requirements.txt 2>&1)",
-      "PowerShell(Get-NetTCPConnection -LocalPort 8765 -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }; Start-Sleep -Milliseconds 500; Start-Process -FilePath \"cmd.exe\" -ArgumentList \"/k\", \"C:\\\\Python314\\\\python.exe main.py\" -WorkingDirectory \"E:\\\\MyWorx\\\\Jarvis\")"
+      "mcp__ccd_session__mark_chapter",
+      "mcp__ccd_session__spawn_task",
+      "mcp__ccd_session__dismiss_task",
+      "mcp__Claude_Preview__preview_start",
+      "mcp__Claude_Preview__preview_screenshot",
+      "mcp__Claude_Preview__preview_snapshot",
+      "mcp__Claude_in_Chrome__navigate",
+      "mcp__Claude_in_Chrome__tabs_context_mcp",
+      "PowerShell($adb = \"C:\\\\Users\\\\mahmo\\\\AppData\\\\Local\\\\Android\\\\Sdk\\\\platform-tools\\\\adb.exe\"; & $adb devices 2>&1)",
+      "Bash(C:/Users/mahmo/AppData/Local/Android/Sdk/platform-tools/adb.exe devices *)",
+      "PowerShell($adb = \"C:\\\\Users\\\\mahmo\\\\AppData\\\\Local\\\\Android\\\\Sdk\\\\platform-tools\\\\adb.exe\"; & $adb reconnect 2>&1; Start-Sleep 2; & $adb devices 2>&1)",
+      "PowerShell($env:PATH = \"E:\\\\MyWorx\\\\SDKs\\\\Flutter\\\\flutter\\\\bin;\" + $env:PATH; Set-Location \"E:\\\\MyWorx\\\\Jarvis\\\\mobile\"; flutter run -d de46a22b 2>&1)",
+      "PowerShell($env:PATH = \"E:\\\\MyWorx\\\\SDKs\\\\Flutter\\\\flutter\\\\bin;\" + $env:PATH; Set-Location \"E:\\\\MyWorx\\\\Jarvis\\\\mobile\"; flutter clean 2>&1; flutter pub get 2>&1)"
     ]
   }
 }
